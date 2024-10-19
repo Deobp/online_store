@@ -1,10 +1,16 @@
 import dotenv from 'dotenv';
 import express from "express";
 import connectDb from "./config/db.js"
+import cors from 'cors'
+import helmet from 'helmet'
 
 dotenv.config({path: "./src/config/.env"})
 
 const app = express()
+
+app.use(cors())
+
+app.use(helmet())
 
 app.use(express.json())
 
