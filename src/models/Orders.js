@@ -1,47 +1,50 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema({
-  userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-  },
-  products: [{
-      productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Product',
-          required: true
-      },
-      priceAtPurchase: {
-          type: Number,
-          required: true
-      },
-      quantity: {
-          type: Number,
-          default: 1
-      }
-  }],
-  status: {
-      type: String,
-      enum: ['pending', 'completed', 'shipped', 'cancelled'],
-      default: 'pending'
-  },
-  totalPrice: {
-      type: Number,
-      required: true
-  },
-  createdAt: {
-      type: Date,
-      default: Date.now
-  },
-  updatedAt: {
-      type: Date,
-      default: Date.now
-  }
-},
+const orderSchema = new mongoose.Schema(
   {
-      timestamps: true,
-      collation: { locale: 'en', strength: 2 }
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    products: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        priceAtPurchase: {
+          type: Number,
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+      },
+    ],
+    status: {
+      type: String,
+      enum: ["pending", "completed", "shipped", "cancelled"],
+      default: "pending",
+    },
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+    collation: { locale: "en", strength: 2 },
   }
 );
 
@@ -67,14 +70,14 @@ orderSchema.methods.updateStatus = async function (newStatus) {
 };
 
 orderSchema.methods.addProduct = async function (productId, quantity) {
-  const product = await mongoose.model('Product').findById(productId);
+  const product = await mongoose.model("Product").findById(productId);
 
   if (!product) {
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
 
   if (product.quantity < quantity) {
-    throw new Error('Insufficient stock available');
+    throw new Error("Insufficient stock available");
   }
 
   const productIndex = this.products.findIndex(
@@ -87,7 +90,7 @@ orderSchema.methods.addProduct = async function (productId, quantity) {
     this.products.push({
       productId,
       quantity,
-      priceAtPurchase: product.price, 
+      priceAtPurchase: product.price,
     });
   }
 
@@ -97,22 +100,45 @@ orderSchema.methods.addProduct = async function (productId, quantity) {
 };
 
 
-orderSchema.methods.removeProduct = async function (productId) {
-  //    !!!IMPORTANT:  ADD QUANTITY TO STOCK!!!'
-  this.products = this.products.filter(
-    (product) => product.productId.toString() !== productId.toString()
+orderSchema.methods.removeProduct = async function (productId, quantity) {
+  const product = await mongoose.model("Product").findById(productId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const productIndex = this.products.findIndex(
+    (p) => p.productId.toString() === productId.toString()
   );
+
+  if (productIndex !== -1) {
+    this.products.increaseQuantity(quantity);
+    
+  } else {
+    return { message: "Product not found in the order." };
+  }
+  
+  if (this.product[productIndex].quantity < 1) {
+    this.products = this.products.filter((item) => {
+      if (String(productId) !== String(item.productId)) {
+        return item;
+      }
+    })
+  }
+
   return await this.save();
 };
 
-orderSchema.pre('save', async function(next) {
+orderSchema.pre("save", async function (next) {
   let total = 0;
   for (let product of this.products) {
-      const productItem = await mongoose.model('Product').findById(product.productId);
-      if (productItem) {
-          product.priceAtPurchase = productItem.price;
-          total += productItem.price * product.quantity;
-      }
+    const productItem = await mongoose
+      .model("Product")
+      .findById(product.productId);
+    if (productItem) {
+      product.priceAtPurchase = productItem.price;
+      total += productItem.price * product.quantity;
+    }
   }
   this.totalPrice = total;
   next();
