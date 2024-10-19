@@ -14,7 +14,8 @@ app.use(helmet())
 
 app.use(express.json())
 
-
+app.use("/api/categories", categoriesRoutes)
+app.use("/api/orders", ordersRoutes)
 
 app.listen(process.env.PORT, () => {
     console.log(`Server is running on ${process.env.PORT}`)
