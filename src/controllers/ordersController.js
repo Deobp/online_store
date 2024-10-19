@@ -111,6 +111,8 @@ module.exports = {
     getAllOrders,
     getOrderById,
     createOrder,
+    updateStatus,
+    deleteOrder
     
   };
   
