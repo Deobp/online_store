@@ -146,4 +146,6 @@ orderSchema.pre("save", async function (next) {
 
 const Order = mongoose.model("Order", orderSchema);
 
-module.exports = { Order };
+//module.exports = { Order };
+
+export default Order

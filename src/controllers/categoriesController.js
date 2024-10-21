@@ -1,6 +1,6 @@
-import Category from "../models/Category"
+import Category from "../models/Category.js"
 
-async function getAllCategories(req, res, next) {
+export async function getAllCategories(req, res, next) {
     try{
         const categories = await Category.find({})
         if (categories.length === 0) 
@@ -14,7 +14,7 @@ async function getAllCategories(req, res, next) {
     
 }
 
-async function getCategoryById(req, res, next) {
+export async function getCategoryById(req, res, next) {
     try {
         const { id } = req.params
         const category = await Category.findById(id)
@@ -28,7 +28,7 @@ async function getCategoryById(req, res, next) {
     }
 }
 
-async function createCategory(req, res, next) {
+export async function createCategory(req, res, next) {
     try {
         const {name, description} = req.body
         if(!name)
@@ -42,7 +42,7 @@ async function createCategory(req, res, next) {
     
 }
 
-async function updateCategoryDescr(req, res, next) {
+export async function updateCategoryDescr(req, res, next) {
     try {
         const { id } = req.params
         const {description} = req.body
@@ -66,7 +66,7 @@ async function updateCategoryDescr(req, res, next) {
     }
 }
 
-async function deleteCategory(req, res, next) {
+export async function deleteCategory(req, res, next) {
     try {
         const { id } = req.params
         if(!id)
@@ -84,12 +84,4 @@ async function deleteCategory(req, res, next) {
     }
     
 }
-
-module.exports = {
-    getAllCategories,
-    getCategoryById,
-    createCategory,
-    updateCategoryDescr,
-    deleteCategory
-  };
   
