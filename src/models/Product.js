@@ -19,6 +19,12 @@ const productSchema = new mongoose.Schema({
         maxlength: [1000, "Description shouldn't be more than 1000 letters."],
         trim: true,
     },
+    imagePath: {
+        type: String,
+        required: true,
+        default: "/img/blank_product.jpg",
+        trim: true,
+    },
     price: {
         type: Number,
         required: true,
