@@ -19,6 +19,12 @@ const productSchema = new mongoose.Schema({
         maxlength: [1000, "Description shouldn't be more than 1000 letters."],
         trim: true,
     },
+    imagePath: {
+        type: String,
+        required: true,
+        default: "/img/blank_product.jpg",
+        trim: true,
+    },
     price: {
         type: Number,
         required: true,
@@ -27,7 +33,7 @@ const productSchema = new mongoose.Schema({
     quantity: { 
         type: Number,
         required: true,
-        min: 1
+        min: 0
     },
     categoryId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -86,11 +92,11 @@ productSchema.methods.increaseQuantity = async function(amount) {
 
 productSchema.methods.decreaseQuantity = async function(amount) {
     if(amount && amount > 0) {
-        if(amount >= this.quantity) {
-            return await this.remove()
+        if(amount > this.quantity) {
+            return {message: "Not enought products in stock."}
         } else await this.updateQuantity(this.quantity - amount)
     } else {
-        return {message: "Value of decreasing amount is not correct"}
+        return {message: "Value of decreasing amount is not correct."}
     }
 }
 
