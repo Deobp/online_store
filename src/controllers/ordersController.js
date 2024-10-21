@@ -1,7 +1,7 @@
-import Order from "../models/Order"
-import User from "../models/User"
+import Order from "../models/Order.js"
+import User from "../models/User.js"
 
-async function getAllOrders(req, res, next) {
+export async function getAllOrders(req, res, next) {
     try{
         const orders = await Order.find({})
         if (orders.length === 0) 
@@ -15,7 +15,7 @@ async function getAllOrders(req, res, next) {
     
 }
 
-async function getOrderById(req, res, next) {
+export async function getOrderById(req, res, next) {
     try {
         const { id } = req.params
         const order = await Category.findById(id)
@@ -31,7 +31,7 @@ async function getOrderById(req, res, next) {
     }
 }
 
-async function createOrder(req, res, next) {
+export async function createOrder(req, res, next) {
     try {
         const {userId} = req.body
         if(!userId)
@@ -66,7 +66,7 @@ async function createOrder(req, res, next) {
     
 }
 
-async function updateStatus(req, res, next) {
+export async function updateStatus(req, res, next) {
     try {
         const { id } = req.params
         const {status} = req.body
@@ -90,7 +90,7 @@ async function updateStatus(req, res, next) {
     }
 }
 
-async function deleteOrder(req, res, next) {
+export async function deleteOrder(req, res, next) {
     try {
         const { id } = req.params
         if(!id)
@@ -109,12 +109,3 @@ async function deleteOrder(req, res, next) {
     
 }
 
-module.exports = {
-    getAllOrders,
-    getOrderById,
-    createOrder,
-    updateStatus,
-    deleteOrder
-    
-  };
-  

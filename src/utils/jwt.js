@@ -8,4 +8,4 @@ function verifyToken(token) {
     return jwt.verify(token, process.env.JWT_SECRET)
 }
 
-module.exports = {createToken, verifyToken}
+export default {createToken, verifyToken}

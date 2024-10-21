@@ -1,6 +1,6 @@
-import jwt from "../utils/jwt"
+import jwt from "../utils/jwt.js"
 
-async function authenticateToken(req, res, next) {    
+export async function authenticateToken(req, res, next) {    
     const authHeader = req.headers.authorization
 
     if (!authHeader || !authHeader.startsWith('Bearer '))
@@ -17,12 +17,10 @@ async function authenticateToken(req, res, next) {
     }
 }
 
-function isAdmin(req, res, next) {
+export async function isAdmin(req, res, next) {
     if (req.user && req.user.role === "admin") {
         next()
     } else {
         res.status(403).send("Access denied, admin privileges required.")
     }
 }
-
-module.exports = { authenticateToken, isAdmin }
