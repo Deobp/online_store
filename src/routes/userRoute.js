@@ -9,9 +9,12 @@ import {
   updatePassword,
   updateFirstName,
   updateLastName,
+  verifyUser
 } from '../controllers/userController.js';
 
 const router = express.Router();
+
+router.post("/login", verifyUser)
 
 // get all users
 router.get('/', getUsers);

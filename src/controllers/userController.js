@@ -1,4 +1,5 @@
 import { User } from "../models/userModel.js";
+import jwt from "../utils/jwt.js"
 
 export const getUsers = async (req, res) => {
   try {
@@ -127,3 +128,13 @@ export const updateLastName = async (req, res) => {
       res.status(400).json({ message: error.message });
   }
 };
+
+export async function verifyUser(req, res, next) {
+  const user = await User.findOne({ username: req.body.username })
+  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+    return res.status(400).json({ message: "Invalid credentials."})
+  }
+
+  const token = jwt.createToken(user)
+  res.json({ token })
+}
