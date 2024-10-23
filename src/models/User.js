@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt"
 
 const engOnlyRegex = /^[A-Za-z\s]+$/;
 const usernameRegex = /^[a-z][a-z0-9]*$/;
@@ -37,12 +38,22 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         set: function(value) {
+            
             if (!passRegex.test(value)) {
+                
                 this.invalidate('password', `Password must be at least 8 symbols (min. 1 uppercase letter, min. 1 lowercase, min. 1 number,
                     min. 1 special symbol)`);   // creating validation error to catch it later in controller
             }
-                
-            return bcrypt.hashSync(value, process.env.SALT_ROUNDS);
+           try{
+            const hashedPassword = bcrypt.hashSync(value, parseInt(process.env.SALT_ROUNDS))
+            
+            return hashedPassword
+
+           } catch(error) {
+            console.log(error.message)
+           }
+            
+
         }
     },
     role: { 

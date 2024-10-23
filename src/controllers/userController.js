@@ -1,4 +1,4 @@
-import { User } from "../models/userModel.js";
+import User from "../models/User.js";
 import jwt from "../utils/jwt.js"
 
 export const getUsers = async (req, res) => {
@@ -137,4 +137,65 @@ export async function verifyUser(req, res, next) {
 
   const token = jwt.createToken(user)
   res.json({ token })
+}
+
+export async function registerUser(req, res, next) {
+  const {firstName, lastName, username, password, email, phone, country, city, street, house} = req.body
+
+  if(!firstName) return res.status(400).json({ message: "First name is missing."})
+  
+  if(!lastName) return res.status(400).json({ message: "Last name is missing."})
+  
+  if(!username) return res.status(400).json({ message: "Username is missing."})
+
+  if(!password) return res.status(400).json({ message: "Password is missing."})
+  
+  if(!email) return res.status(400).json({ message: "email is missing."})
+      
+  if(!phone) return res.status(400).json({ message: "Phone number is missing."})
+
+  if(!country) return res.status(400).json({ message: "Country is missing."})
+
+  if(!city) return res.status(400).json({ message: "City is missing."})
+
+  if(!street) return res.status(400).json({ message: "Street is missing."})
+
+  if(!house) return res.status(400).json({ message: "House is missing."})
+    
+  let user = await User.findOne({ username })
+  if (user) return res.status(400).json({ message: "This username is busy."})
+  
+  user = await User.findOne({ email })
+  if (user) return res.status(400).json({ message: "This email is busy."})
+
+  user = await User.findOne({ phone })
+  if (user) return res.status(400).json({ message: "This phone number is busy."})
+
+  try {
+    const newUser = new User({
+      firstName,
+      lastName,
+      username,
+      password,
+      email,
+      phone,
+      country,
+      city,
+      street,
+      house        
+    });
+
+    await newUser.save()
+
+    const token = jwt.createToken(newUser)
+    res.status(201).json({ message: "User registered successfully", token });
+
+    
+
+  } catch(error) {
+    res.status(500).json({ message: error.message })
+
+    }
+
+  
 }

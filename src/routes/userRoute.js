@@ -9,11 +9,13 @@ import {
   updatePassword,
   updateFirstName,
   updateLastName,
-  verifyUser
+  verifyUser,
+  registerUser
 } from '../controllers/userController.js';
 
 const router = express.Router();
 
+router.post("/register", registerUser)
 router.post("/login", verifyUser)
 
 // get all users
