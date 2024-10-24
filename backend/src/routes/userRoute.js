@@ -36,7 +36,7 @@ router.delete('/:id', authenticateToken, isAdmin, deleteUser);
 
 router.post('/:id/cart', addToCart);
 
-router.put('/:id/password', updatePassword);
+router.patch('/:id/password', authenticateToken, updatePassword);
 
 router.put('/:id/first-name', updateFirstName);
 

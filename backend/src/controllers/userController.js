@@ -101,11 +101,22 @@ export const addToCart = async (req,res) => {
 
 export const updatePassword = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(401).json({ message: "Access denied, you are not admin or this is not your data."})
+    }
+
+    const user = await User.findById(id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const {newPassword} = req.body;
-    await user.updatePassword(newPassword);
+    const {password} = req.body;
+
+    if(bcrypt.compareSync(password, user.password)) 
+      return res.status(200).json({message: "Password not changed. You already use it."});
+    
+    await user.updatePassword(password);
     res.status(200).json({message: "Password updated successfully"});
   } catch (error) {
     res.status(400).json({ message: error.message });

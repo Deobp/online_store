@@ -51,13 +51,13 @@ export async function updateCategoryDescr(req, res, next) {
         const category = await Category.findById(id)
 
         if (!category)
-           res.status(404).json({ message: "Category not found" })
+           return res.status(404).json({ message: "Category not found" })
 
         if (!description)
-            res.status(400).json({ message: "Description is missing" })
+            return res.status(400).json({ message: "Description is missing" })
 
         if (description === category.description)
-            res.status(400).json({ message: "There is nothing to change" })
+            return res.status(400).json({ message: "There is nothing to change" })
 
         await category.updateDescription(description)
         await category.save()
@@ -71,12 +71,12 @@ export async function deleteCategory(req, res, next) {
     try {
         const { id } = req.params
         if(!id)
-            res.status(400).json({ message: "Category ID is missing" })
+           return res.status(400).json({ message: "Category ID is missing" })
        
         const deletedCategory = await Category.findByIdAndDelete(id)
 
         if (!deletedCategory)
-            res.status(404).json({ message: "Category not found" });
+           return res.status(404).json({ message: "Category not found" });
         
         res.status(204).send();
 
