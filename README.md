@@ -1,3 +1,7 @@
+To run frontend in folder frontend run commands:
+npm i
+npm run dev
+
 USERS (create, update):
     (id),
     [role].
