@@ -13,15 +13,20 @@ import {
   registerUser
 } from '../controllers/userController.js';
 
+import {
+  authenticateToken,
+  isAdmin
+} from "../middlewares/auth.js"
+
 const router = express.Router();
 
 router.post("/register", registerUser)
 router.post("/login", verifyUser)
 
 // get all users
-router.get('/', getUsers);
+router.get('/', authenticateToken, isAdmin, getUsers);
 
-router.get('/:id', getUserById);
+router.get('/:id', authenticateToken, getUserById);
 
 router.post('/', createUser);
 

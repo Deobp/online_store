@@ -20,12 +20,12 @@ export async function getOrderById(req, res, next) {
         const { id } = req.params
         const order = await Category.findById(id)
         if(req.user.id !== order.userId || req.user.role !== "admin")
-            return res.status(401).send("Access denied, you are not admin or this is not your order")
+            return res.status(401).json({ message: "Access denied, you are not admin or this is not your order"})
         
         if (!order)
            return res.status(404).json({ message: "Order not found" })
         
-        res.status(200).json(cat)
+        res.status(200).json(order)
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
