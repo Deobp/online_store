@@ -5,7 +5,6 @@ const Products = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch products from the backend when the component mounts
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -14,7 +13,7 @@ const Products = () => {
           throw new Error('Failed to fetch products');
         }
         const data = await response.json();
-        setProducts(data); // Assuming the response is a JSON array of products
+        setProducts(data);
         setLoading(false);
       } catch (error) {
         setError(error.message);
