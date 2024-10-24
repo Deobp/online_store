@@ -82,7 +82,7 @@ export const deleteUser = async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) return res.status(404).json({ message: "User not found" });
-    res.status(200).json({message: 'User delete successfully', deletedUser: deletedUser});
+    res.status(200).json({message: 'User deleted successfully', deletedUser: deletedUser});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -156,7 +156,7 @@ res.status(200).json({ message: "User authorized", token });
 }
 
 export async function registerUser(req, res, next) {
-  const {firstName, lastName, username, password, email, phone, country, city, street, house} = req.body
+  const {firstName, lastName, username, password, email, phone, country, city, street, house, apartment} = req.body
 
   if(!firstName) return res.status(400).json({ message: "First name is missing."})
   
@@ -198,7 +198,8 @@ export async function registerUser(req, res, next) {
       country,
       city,
       street,
-      house        
+      house,
+      apartment        
     });
 
     await newUser.save()

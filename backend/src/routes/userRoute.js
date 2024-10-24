@@ -28,11 +28,11 @@ router.get('/', authenticateToken, isAdmin, getUsers);
 
 router.get('/:id', authenticateToken, getUserById);
 
-router.post('/', createUser);
+///router.post('/', createUser);
 
 router.put('/:id', updateUser);
 
-router.delete('/:id', deleteUser);
+router.delete('/:id', authenticateToken, isAdmin, deleteUser);
 
 router.post('/:id/cart', addToCart);
 
