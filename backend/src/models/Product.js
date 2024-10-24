@@ -102,4 +102,4 @@ productSchema.methods.decreaseQuantity = async function(amount) {
 
 const Product = mongoose.model("Product", productSchema);
 
-module.exports = { Product };
+export default Product

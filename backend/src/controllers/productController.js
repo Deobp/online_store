@@ -1,4 +1,4 @@
-import { Product } from "../models/productModel.js";
+import Product from "../models/Product.js";
 export const createProduct = async (req, res) => {
   const { name, description, price, quantity, categoryId } = req.body;
 
@@ -17,6 +17,16 @@ export const createProduct = async (req, res) => {
       res.status(400).json({ message: error.message });
   }
 };
+
+export const getProducts = async (req, res) => {
+    try {
+      const products = await Product.find();
+      if(!products.length) return res.status(200).json({ message: "no products in db" });
+      res.status(200).json(products);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
 
 export const getProductById = async (req, res) => {
   const { id } = req.params;

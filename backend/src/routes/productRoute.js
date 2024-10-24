@@ -1,6 +1,7 @@
 import express from 'express';
 import { 
-    createProduct, 
+    createProduct,
+    getProducts,
     getProductById, 
     updateProductById, 
     deleteProductById, 
@@ -10,18 +11,18 @@ import {
 
 const router = express.Router();
 
-router.post('/products', createProduct);
+router.post("/", createProduct).get("/", getProducts);
 
-router.get('/products/:id', getProductById);
+router.get('/:id', getProductById);
 
-router.put('/products/:id', updateProductById);
+router.put('/:id', updateProductById);
 
-router.delete('/products/:id', deleteProductById);
+router.delete('/:id', deleteProductById);
 
 // Increase product quantity
-router.patch('/products/:id/increase', increaseProductQuantity);
+router.patch('/:id/increase', increaseProductQuantity);
 
 // Decrease product quantity
-router.patch('/products/:id/decrease', decreaseProductQuantity);
+router.patch('/:id/decrease', decreaseProductQuantity);
 
 export default router;
