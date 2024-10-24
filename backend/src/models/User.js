@@ -149,7 +149,7 @@ userSchema.methods.addToCart = async function(productId, quantity) {
 
 }
 
-userSchema.methods.updatefirstName = async function(newFirstName) {
+userSchema.methods.updateFirstName = async function(newFirstName) {
     if(newFirstName && newFirstName !== this.firstName) {
         this.firstName = newFirstName
         return await this.save() 

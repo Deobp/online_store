@@ -105,7 +105,7 @@ export const updatePassword = async (req, res) => {
     
     if(req.user.id !== id) {
       if(req.user.role !== "admin")
-        return res.status(401).json({ message: "Access denied, you are not admin or this is not your data."})
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
     }
 
     const user = await User.findById(id);
@@ -115,7 +115,7 @@ export const updatePassword = async (req, res) => {
 
     if(bcrypt.compareSync(password, user.password)) 
       return res.status(200).json({message: "Password not changed. You already use it."});
-    
+
     await user.updatePassword(password);
     res.status(200).json({message: "Password updated successfully"});
   } catch (error) {
@@ -125,11 +125,20 @@ export const updatePassword = async (req, res) => {
 
 export const updateFirstName = async (req, res) => {
   try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const {newFirstName} = req.body;
-    const result = await user.updateFirstName(newFirstName);
+    const {firstName} = req.body;
+    if(firstName === user.firstName) return res.status(200).json({message: "First name not changed. You already use it."});
+    
+    const result = await user.updateFirstName(firstName);
     res.status(200).json({message: "First name updated successfully", result});
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -138,11 +147,21 @@ export const updateFirstName = async (req, res) => {
 
 export const updateLastName = async (req, res) => {
   try {
-      const user = await User.findById(req.params.id);
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
       if (!user) return res.status(404).json({ message: "User not found" });
       
-      const { newLastName } = req.body;
-      const result = await user.updateLastName(newLastName);
+      const { lastName } = req.body;
+
+      if(lastName === user.lastName) return res.status(200).json({message: "Last name not changed. You already use it."});
+
+      const result = await user.updateLastName(lastName);
       res.status(200).json({message: "Last name updated successfully", result});
     } catch (error) {
       res.status(400).json({ message: error.message });
@@ -152,7 +171,7 @@ export const updateLastName = async (req, res) => {
 export async function verifyUser(req, res, next) {
   const user = await User.findOne({ username: req.body.username })
   if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
-    return res.status(400).json({ message: "Invalid credentials."})
+    return res.status(401).json({ message: "Invalid credentials."})
   }
 
   const token = jwt.createToken(user)

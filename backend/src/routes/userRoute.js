@@ -38,8 +38,8 @@ router.post('/:id/cart', addToCart);
 
 router.patch('/:id/password', authenticateToken, updatePassword);
 
-router.put('/:id/first-name', updateFirstName);
+router.patch('/:id/first-name', authenticateToken, updateFirstName);
 
-router.put('/:id/last-name', updateLastName);
+router.patch('/:id/last-name', authenticateToken, updateLastName);
 
 export default router;
