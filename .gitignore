@@ -1,2 +1,7 @@
 .env
+<<<<<<< HEAD
 node_modules/
+=======
+node_modules
+.history
+>>>>>>> develop_Oleksandr
