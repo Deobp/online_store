@@ -35,6 +35,7 @@ export async function createCategory(req, res, next) {
             return res.status(400).json({ message: "Category name is missing" })
         const newCategory = Category({name, description})
         await newCategory.save()
+        res.status(201).json({ message: "The new category added successfully" });
 
     } catch(error) {
         res.status(500).json({ message: error.message })

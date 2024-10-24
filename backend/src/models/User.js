@@ -6,6 +6,7 @@ const usernameRegex = /^[a-z][a-z0-9]*$/;
 const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\W_]).{8,}$/;    // symbols and length
 const phoneRegex = /^\+\d+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const countryCityStreetRegex = /^[A-Za-z\s-]+$/;
 
 const userSchema = new mongoose.Schema({
     firstName: {
@@ -82,19 +83,19 @@ const userSchema = new mongoose.Schema({
     country: {
         type: String,
         required: true,
-        match: [engOnlyRegex, "Only english letters and spaces allowed."],
+        match: [countryCityStreetRegex, "Only english letters and spaces allowed."],
         trim: true
     },
     city: {
         type: String,
         required: true,
-        match: [engOnlyRegex, "Only english letters and spaces allowed."],
+        match: [countryCityStreetRegex, "Only english letters and spaces allowed."],
         trim: true
     },
     street: {
         type: String,
         required: true,
-        match: [engOnlyRegex, "Only english letters and spaces allowed."],
+        match: [countryCityStreetRegex, "Only english letters and spaces allowed."],
         trim: true
     },
     house: {

@@ -5,6 +5,7 @@ import bcrypt from "bcrypt"
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find();
+    if(!users.length) return res.status(200).json({ message: "no users in db" });
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -137,7 +138,14 @@ export async function verifyUser(req, res, next) {
   }
 
   const token = jwt.createToken(user)
-  res.json({ token })
+  if(!token) return res.status(500).json({ message: "Error generating token"})
+  //res.json({ token })
+  res.cookie('token', token, {
+    httpOnly: true,
+    maxAge: 3600000 // 1h
+});
+
+res.status(200).json({ message: "User authorized", token });
 }
 
 export async function registerUser(req, res, next) {
@@ -189,6 +197,12 @@ export async function registerUser(req, res, next) {
     await newUser.save()
 
     const token = jwt.createToken(newUser)
+    if(!token) return res.status(500).json({ message: "Error generating token"})
+      //res.json({ token })
+      res.cookie('token', token, {
+        httpOnly: true,
+        maxAge: 3600000 // 1h
+    });
     res.status(201).json({ message: "User registered successfully", token });
 
     
