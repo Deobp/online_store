@@ -52,36 +52,59 @@ const productSchema = new mongoose.Schema({
 );
 
 productSchema.methods.updateName = async function(newName) {
-    if(newName && newName !== this.name) {
-        this.name = newName
-        return await this.save() 
-    } else 
-        return {message: "Name didn't change"}
-}
+    if (!newName) throw new Error("Product's name didn't change. Invalid value.");
+      
+    if(newName === this.name) throw new Error("Product's name didn't change. Same value entered.");
+    
+    this.name = newName;
+    
+    return await this.save();
+    
+  };
 
-productSchema.methods.updateDescription = async function(newDescription) {
-    if(newDescription && newDescription !== this.description) {
-        this.description = newDescription
-        return await this.save() 
-    } else 
-        return {message: "Description didn't change"}
-}
+  productSchema.methods.updateDescription = async function(newDescription) {
+    if (!newDescription) throw new Error("Product's description didn't change. Invalid value.");
+      
+    if(newDescription === this.description) throw new Error("Product's description didn't change. Same value entered.");
+    
+    this.description = newDescription;
+    
+    return await this.save();
+    
+  };
 
-productSchema.methods.updatePrice = async function(newPrice) {
-    if(newPrice && newPrice !== this.price) {
-        this.price = newPrice
-        return await this.save() 
-    } else 
-        return {message: "Price didn't change"}
-}
+  productSchema.methods.updatePrice = async function(newPrice) {
+    if (!newPrice) throw new Error("Product's price didn't change. Invalid value.");
+      
+    if(newPrice === this.price) throw new Error("Product's price didn't change. Same value entered.");
+    
+    this.price = newPrice;
+    
+    return await this.save();
+    
+  };
 
-productSchema.methods.updateQuantity = async function(newQuantity) {
-    if(newQuantity && newQuantity !== this.quantity) {
-        this.quantity = newQuantity
-        return await this.save() 
-    } else 
-        return {message: "Quantity didn't change"}
-}
+  productSchema.methods.updateQuantity = async function(newQuantity) {
+    if (!newQuantity) throw new Error("Product's quantity didn't change. Invalid value.");
+      
+    if(newQuantity === this.quantity) throw new Error("Product's quantity didn't change. Same value entered.");
+    
+    this.quantity = newQuantity;
+    
+    return await this.save();
+    
+  };
+
+  productSchema.methods.updateImagePath = async function(newImagePath) {
+    if (!newImagePath) throw new Error("Image path didn't change. Invalid value.");
+      
+    if(newImagePath === this.imagePath) throw new Error("Image path didn't change. Same value entered.");
+    
+    this.imagePath = newImagePath;
+    
+    return await this.save();
+    
+  };
 
 productSchema.methods.increaseQuantity = async function(amount) {
     if(amount && amount > 0) {

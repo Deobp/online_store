@@ -19,7 +19,14 @@ const categorySchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-});
+},
+
+{
+  collation: { locale: 'en', strength: 2 },  // TeXt = text
+  toJSON: { virtuals: true },  
+  toObject: { virtuals: true } 
+}
+);
 
 categorySchema.methods.updateName = async function(newName) {
   if (!newName) throw new Error("Name didn't change. Invalid value.");
@@ -49,6 +56,12 @@ categorySchema.methods.deleteCategory = async function() {
 categorySchema.statics.findByName = async function(name) {
   return await this.findOne({ name: name }); 
 };
+
+categorySchema.virtual("products", {
+  ref: "Product",
+  localField: "_id",
+  foreignField: "categoryId"
+});
 
 const Category = mongoose.model('Category', categorySchema);
 

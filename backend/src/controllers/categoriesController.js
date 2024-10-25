@@ -130,4 +130,15 @@ export async function deleteCategory(req, res, next) {
     }
     
 }
+
+export async function getProductsByCategoryId(req, res) {
+    try {
+        const category = await Category.findById(req.params.id)
+            .populate("products")
+            
+        res.json(category);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
   
