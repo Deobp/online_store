@@ -69,6 +69,13 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(401).json({ message: "Access denied, you are not admin or this is not your data."})
+      } 
+
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
       if (!updatedUser) return res.status(404).json({ message: "User not found" });
       res.status(200).json(updatedUser);

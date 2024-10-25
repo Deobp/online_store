@@ -30,7 +30,7 @@ router.get('/:id', authenticateToken, getUserById);
 
 ///router.post('/', createUser);
 
-router.put('/:id', updateUser);
+router.put('/:id', authenticateToken, updateUser);
 
 router.delete('/:id', authenticateToken, isAdmin, deleteUser);
 

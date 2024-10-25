@@ -22,21 +22,24 @@ const categorySchema = new mongoose.Schema({
 });
 
 categorySchema.methods.updateName = async function(newName) {
-  if (newName && newName !== this.name) {
-    this.name = newName;
-    return await this.save();
-  } else {
-    return { message: "Name didn't is invalid" };
-  }
+  if (!newName) throw new Error("Name didn't change. Invalid value.");
+    
+  if(newName === this.name) throw new Error("Name didn't change. Same value entered.");
+  
+  this.name = newName;
+  
+  return await this.save();
+  
 };
 
 categorySchema.methods.updateDescription = async function(newDescription) {
-  if (newDescription && newDescription !== this.description) {
-    this.description = newDescription;
-    return await this.save();
-  } else {
-    return { message: "Description didn't change or is invalid" };
-  }
+  if (!newDescription) throw new Error("Description didn't change. Invalid value.");
+    
+  if(newDescription === this.description) throw new Error("Description didn't change. Same value entered.");
+  
+  this.description = newDescription;
+  
+  return await this.save();
 };
 
 categorySchema.methods.deleteCategory = async function() {

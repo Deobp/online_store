@@ -9,20 +9,25 @@ import {
     decreaseProductQuantity 
 } from '../controllers/productController.js';
 
+import {
+    authenticateToken,
+    isAdmin
+  } from "../middlewares/auth.js"
+
 const router = express.Router();
 
-router.post("/", createProduct).get("/", getProducts);
+router.post("/", authenticateToken, isAdmin, createProduct).get("/", getProducts);
 
 router.get('/:id', getProductById);
 
-router.put('/:id', updateProductById);
+router.put('/:id', authenticateToken, isAdmin, updateProductById);
 
-router.delete('/:id', deleteProductById);
+router.delete('/:id', authenticateToken, isAdmin, deleteProductById);
 
 // Increase product quantity
-router.patch('/:id/increase', increaseProductQuantity);
+router.patch('/:id/increase', authenticateToken, isAdmin, increaseProductQuantity);
 
 // Decrease product quantity
-router.patch('/:id/decrease', decreaseProductQuantity);
+router.patch('/:id/decrease', authenticateToken, isAdmin, decreaseProductQuantity);
 
 export default router;

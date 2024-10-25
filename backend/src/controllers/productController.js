@@ -1,6 +1,6 @@
 import Product from "../models/Product.js";
 export const createProduct = async (req, res) => {
-  const { name, description, price, quantity, categoryId } = req.body;
+  const { name, description, price, quantity, categoryId, imagePath } = req.body;
 
   try {
       const newProduct = new Product({
@@ -8,7 +8,8 @@ export const createProduct = async (req, res) => {
           description,
           price,
           quantity,
-          categoryId
+          categoryId,
+          imagePath
       });
 
       const savedProduct = await newProduct.save();
@@ -107,3 +108,4 @@ export const decreaseProductQuantity = async (req, res) => {
       res.status(400).json({ message: error.message });
   }
 };
+
