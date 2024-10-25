@@ -22,7 +22,7 @@ router.route("/:id").get(getCategoryById).put(authenticateToken, isAdmin, update
 
 router.route("/:id/name").patch(authenticateToken, isAdmin, updateCategoryName)
 router.route("/:id/description").patch(authenticateToken, isAdmin, updateCategoryDescr)
-//module.exports = router;
+
 
 export default router
 

@@ -6,11 +6,19 @@ import {
   updateUser,
   deleteUser,
   addToCart,
+  updateUsername,
   updatePassword,
   updateFirstName,
   updateLastName,
   verifyUser,
-  registerUser
+  registerUser,
+  updateEmail,
+  updatePhone,
+  updateCountry,
+  updateCity,
+  updateStreet,
+  updateHouse,
+  updateApartment
 } from '../controllers/userController.js';
 
 import {
@@ -36,10 +44,28 @@ router.delete('/:id', authenticateToken, isAdmin, deleteUser);
 
 router.post('/:id/cart', addToCart);
 
+router.patch('/:id/username', authenticateToken, updateUsername);
+
 router.patch('/:id/password', authenticateToken, updatePassword);
 
 router.patch('/:id/first-name', authenticateToken, updateFirstName);
 
 router.patch('/:id/last-name', authenticateToken, updateLastName);
+
+router.patch('/:id/email', authenticateToken, updateEmail);
+
+router.patch('/:id/phone', authenticateToken, updatePhone);
+
+router.patch('/:id/country', authenticateToken, updateCountry);
+
+router.patch('/:id/city', authenticateToken, updateCity);
+
+router.patch('/:id/street', authenticateToken, updateStreet);
+
+router.patch('/:id/house', authenticateToken, updateHouse);
+
+router.patch('/:id/apartment', authenticateToken, updateApartment);
+
+
 
 export default router;

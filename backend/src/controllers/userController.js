@@ -120,13 +120,18 @@ export const updatePassword = async (req, res) => {
 
     const {password} = req.body;
 
+    if (!password)
+      return res.status(400).json({ message: "Password is missing" })
+
     if(bcrypt.compareSync(password, user.password)) 
-      return res.status(200).json({message: "Password not changed. You already use it."});
+      return res.status(400).json({message: "Password didn't change. You already use it."});
 
     await user.updatePassword(password);
     res.status(200).json({message: "Password updated successfully"});
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (error.name === "ValidationError" || error.message.includes("Invalid value"))
+      return res.status(400).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
 }
 
@@ -143,12 +148,16 @@ export const updateFirstName = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const {firstName} = req.body;
-    if(firstName === user.firstName) return res.status(200).json({message: "First name not changed. You already use it."});
+    
+    if (!firstName)
+      return res.status(400).json({ message: "First name is missing" })
     
     const result = await user.updateFirstName(firstName);
     res.status(200).json({message: "First name updated successfully", result});
   } catch (error) {
-    res.status(400).json({ message: error.message });
+      if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
   }
 }
 
@@ -166,14 +175,226 @@ export const updateLastName = async (req, res) => {
       
       const { lastName } = req.body;
 
-      if(lastName === user.lastName) return res.status(200).json({message: "Last name not changed. You already use it."});
+      if (!lastName)
+        return res.status(400).json({ message: "Last name is missing" })
 
       const result = await user.updateLastName(lastName);
       res.status(200).json({message: "Last name updated successfully", result});
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
   }
 };
+
+export const updateUsername = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { username } = req.body;
+
+      if (!username)
+        return res.status(400).json({ message: "Username is missing" })
+
+      const result = await user.updateUsername(username);
+      res.status(200).json({message: "Username updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updatePhone = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { phone } = req.body;
+
+      if (!phone)
+        return res.status(400).json({ message: "Phone number is missing" })
+
+      const result = await user.updatePhone(phone);
+      res.status(200).json({message: "Phone number updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateEmail = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { email } = req.body;
+
+      if (!email)
+        return res.status(400).json({ message: "email is missing" })
+
+      const result = await user.updateEmail(email);
+      res.status(200).json({message: "email updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCountry = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { country } = req.body;
+
+      if (!country)
+        return res.status(400).json({ message: "Country is missing" })
+
+      const result = await user.updateCountry(country);
+      res.status(200).json({message: "Country updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError")
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCity = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { city } = req.body;
+
+      if (!city)
+        return res.status(400).json({ message: "City is missing" })
+
+      const result = await user.updateCity(city);
+      res.status(200).json({message: "City updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError")
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateStreet = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { street } = req.body;
+
+      if (!street)
+        return res.status(400).json({ message: "Street is missing" })
+
+      const result = await user.updateStreet(street);
+      res.status(200).json({message: "Street updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError")
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateHouse = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { house } = req.body;
+
+      if (!house)
+        return res.status(400).json({ message: "House number is missing" })
+
+      const result = await user.updateHouse(house);
+      res.status(200).json({message: "House number updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError")
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateApartment = async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }  
+    
+    const user = await User.findById(req.params.id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      const { apartment } = req.body;
+
+      if (!apartment)
+        return res.status(400).json({ message: "Apartment number is missing" })
+
+      const result = await user.updateApartment(apartment);
+      res.status(200).json({message: "Apartment number updated successfully", result});
+    } catch (error) {
+      if (error.message.includes("didn't change") || error.name === "ValidationError")
+        return res.status(400).json({ message: error.message })
+      res.status(500).json({ message: error.message });
+  }
+};
+
 
 export async function verifyUser(req, res, next) {
   const user = await User.findOne({ username: req.body.username })
@@ -253,6 +474,8 @@ export async function registerUser(req, res, next) {
     
 
   } catch(error) {
+    if (error.name === "ValidationError" || error.code === 11000)
+      return res.status(400).json({ message: error.message })
     res.status(500).json({ message: error.message })
 
     }

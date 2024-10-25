@@ -38,6 +38,8 @@ export async function createCategory(req, res, next) {
         res.status(201).json({ message: "The new category added successfully" });
 
     } catch(error) {
+        if (error.name === "ValidationError" || error.code === 11000)
+            return res.status(400).json({ message: error.message })
         res.status(500).json({ message: error.message })
     }
     
@@ -54,7 +56,10 @@ export const updateCategoryById = async (req, res) => {
         }
         res.status(200).json(updatedCategory);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === "ValidationError" || error.code === 11000)
+            return res.status(400).json({ message: error.message })
+
+        res.status(500).json({ message: error.message });
     }
   };
 
@@ -75,7 +80,7 @@ export async function updateCategoryName(req, res, next) {
        
         res.status(200).json({ message: "Category's name updated successfully"});
     } catch (error) {
-        if (error.message.includes("didn't change"))
+        if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
             return res.status(400).json({ message: error.message })
 
         res.status(500).json({ message: error.message });
@@ -100,7 +105,7 @@ export async function updateCategoryDescr(req, res, next) {
         
         res.status(200).json({ message: "Description updated successfully"});
     } catch (error) {
-        if (error.message.includes("didn't change"))
+        if (error.message.includes("didn't change") || error.name === "ValidationError" || error.code === 11000)
             return res.status(400).json({ message: error.message })
 
         res.status(500).json({ message: error.message });
