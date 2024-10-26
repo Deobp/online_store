@@ -81,7 +81,10 @@ export const updateUser = async (req, res) => {
       res.status(200).json(updatedUser);
     
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (error.name === "ValidationError" || error.code === 11000)
+      return res.status(400).json({ message: error.message })
+    
+    res.status(500).json({ message: error.message });
   }
 }
 
