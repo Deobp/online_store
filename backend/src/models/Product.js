@@ -23,7 +23,7 @@ const productSchema = new mongoose.Schema({
     imagePath: {
         type: String,
         required: true,
-        default: "/img/products/default.png",
+        default: "https://picsum.photos/200/300",
         trim: true,
     },
     price: {

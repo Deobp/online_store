@@ -1,6 +1,7 @@
 import mongoose from "mongoose"
 
 export default async function connectDb() {
+  const e = process.env.DB_CONNECT 
     mongoose
   .connect(
     process.env.DB_CONNECT  // look at .env.sample
