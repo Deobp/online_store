@@ -13,7 +13,7 @@ function Login() {
         e.preventDefault();
 
         try {
-            const res = await axios.post('http://localhost:3000/api/auth/login', { username, password });
+            const res = await axios.post('http://localhost:3000/api/users/login', { username, password });
             login(res.data.token);
             navigate('/');
         } catch (err) {
@@ -44,3 +44,4 @@ function Login() {
 }
 
 export default Login;
+
