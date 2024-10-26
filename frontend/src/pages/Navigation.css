@@ -1,0 +1,31 @@
+/* Navigation.css */
+
+.navbar {
+  background-color: #333; /* Dark background for the navbar */
+  padding: 10px 0; /* Padding for the navbar */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+}
+
+.navbar-list {
+  display: flex;
+  justify-content: center;
+  list-style: none; 
+  margin: 0; 
+  padding: 0; 
+}
+
+.navbar-list li {
+  margin: 0 15px; 
+}
+
+.navbar-list a {
+  color: #fff;
+  text-decoration: none; 
+  padding: 8px 16px; 
+  border-radius: 4px; 
+  transition: background-color 0.3s;
+}
+
+.navbar-list a:hover {
+  background-color: #575757;
+}
