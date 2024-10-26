@@ -7,6 +7,7 @@ const productSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
+        unique: true,
         match: [nameRegEx, "Only english letters, spaces, quotes and '-' allowed."],
         minlength: [3, "Name should be equal or more than 3 letters."],
         maxlength: [100, "Name shouldn't be more than 100 letters."],
@@ -95,6 +96,17 @@ productSchema.methods.updateName = async function(newName) {
     
   };
 
+  productSchema.methods.updateCategoryId = async function(newCategoryId) {
+    if (!newCategoryId) throw new Error("Category ID didn't change. Invalid value.");
+      
+    if(newCategoryId.toString() === this.categoryId.toString()) throw new Error("Category ID didn't change. Same value entered.");
+    
+    this.categoryId = newCategoryId;
+    
+    return await this.save();
+    
+  };
+
   productSchema.methods.updateImagePath = async function(newImagePath) {
     if (!newImagePath) throw new Error("Image path didn't change. Invalid value.");
       
@@ -107,21 +119,29 @@ productSchema.methods.updateName = async function(newName) {
   };
 
 productSchema.methods.increaseQuantity = async function(amount) {
-    if(amount && amount > 0) {
-        await this.updateQuantity(this.quantity + amount)
-    } else {
-        return {message: "Value of increasing amount is not correct"}
-    }
+    if(!amount || amount < 0) throw new Error("Product's quantity didn't change. Invalid value entered.")
+    
+    if(amount === 0) throw new Error("Product's quantity didn't change. You entered 0.")
+    
+    return await this.updateQuantity(this.quantity + amount)
 }
 
 productSchema.methods.decreaseQuantity = async function(amount) {
-    if(amount && amount > 0) {
-        if(amount > this.quantity) {
-            return {message: "Not enought products in stock."}
-        } else await this.updateQuantity(this.quantity - amount)
-    } else {
-        return {message: "Value of decreasing amount is not correct."}
+    amount = parseInt(amount)
+    
+    if(!amount || amount < 0) throw new Error("Product's quantity didn't change. Invalid value entered.")
+
+    if(amount === 0) throw new Error("Product's quantity didn't change. You entered 0.")
+    
+    if(amount > this.quantity)
+        throw new Error("Product's quantity didn't change. Not enough products in stock.")
+    
+    if(amount === this.quantity) {
+        await this.deleteOne()
+        return 0
     }
+    
+    return await this.updateQuantity(this.quantity - amount)
 }
 
 const Product = mongoose.model("Product", productSchema);
