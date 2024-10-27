@@ -551,3 +551,17 @@ export async function registerUser(req, res, next) {
 
   
 }
+
+export async function logout(req, res, next) {
+  try {
+    // clear cookie with token
+    res.clearCookie('token', {
+      httpOnly: true,
+    });
+
+    return res.status(200).json({ message: "Logout: success." });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+  
+}

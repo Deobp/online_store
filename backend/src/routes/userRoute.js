@@ -20,7 +20,8 @@ import {
   updateHouse,
   updateApartment,
   clearCart,
-  viewCart
+  viewCart,
+  logout
 } from '../controllers/userController.js';
 
 import {
@@ -32,6 +33,7 @@ const router = express.Router();
 
 router.post("/register", registerUser)
 router.post("/login", verifyUser)
+router.post("/logout", logout)
 
 // get all users
 router.get('/', authenticateToken, isAdmin, getUsers);
