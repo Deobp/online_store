@@ -243,7 +243,7 @@ export async function updateProductCategoryId(req, res, next) {
         const category = await Category.findById(categoryId)
 
         if (!category)
-            return res.status(404).json({ message: "Category with this id not gound" })
+            return res.status(404).json({ message: "Category with this id not found" })
 
         await product.updateCategoryId(categoryId)
        

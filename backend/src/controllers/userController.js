@@ -1,3 +1,4 @@
+import Product from "../models/Product.js";
 import User from "../models/User.js";
 import jwt from "../utils/jwt.js"
 import bcrypt from "bcrypt"
@@ -99,14 +100,79 @@ export const deleteUser = async (req, res) => {
 }
 
 export const addToCart = async (req,res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    await user.addToCart(productId, quantity);
-    res.status(200).json({message: "Product added to cart", cart: user.cart});
+  const { id } = req.params
+    
+    if(req.user.id !== id) {
+      if(req.user.role !== "admin")
+        return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }
+    
+    const {productId, quantity} = req.body;
+    
+    if (!productId)
+      return res.status(400).json({ message: "Product ID is missing" })
+
+    if (!quantity)
+      return res.status(400).json({ message: "Product's quantity is missing" })
+
+    try {
+      const product = await Product.findById(productId)
+    
+      if (!product)
+          return res.status(404).json({ message: "Product with this id not found" })
+
+      if(parseInt(quantity) > product.quantity)
+          return res.status(400).json({ message: "Not enough products in stock." })
+
+      const user = await User.findById(id);
+      
+      if (!user) return res.status(404).json({ message: "User with this ID not found" });
+        
+      await user.addToCart(productId, quantity, product.quantity);
+    
+      res.status(200).json({message: "Product added to cart", cart: user.cart});
   } catch (error) {
+    if (error.name === "CastError" || error.name === "StockError")
+      return res.status(400).json({ message: error.message })
+
     res.status(500).json({ message: error.message });
   }
+}
+
+export async function clearCart(req, res) {
+  const { id } = req.params
+    
+  if(req.user.id !== id) {
+    if(req.user.role !== "admin")
+      return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }
+
+    const user = await User.findById(id);
+      
+    if (!user) return res.status(404).json({ message: "User with this ID not found" });
+
+    await user.clearCart()
+
+    res.status(200).json({message: "User's cart is cleared.", cart: user.cart});
+  
+}
+
+export async function viewCart(req, res) {
+  const { id } = req.params
+    
+  if(req.user.id !== id) {
+    if(req.user.role !== "admin")
+      return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+    }
+
+    const user = await User.findById(id);
+      
+    if (!user) return res.status(404).json({ message: "User with this ID not found" });
+
+    const result = await user.getCart()
+
+    res.status(200).json({cart: result});
+  
 }
 
 export const updatePassword = async (req, res) => {

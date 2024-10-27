@@ -136,10 +136,19 @@ userSchema.virtual("fullAddress").get(function() {
     return `${this.country} ${this.city} ${this.street} ${this.house} ${this.apartment}`;
 });
 
-userSchema.methods.addToCart = async function(productId, quantity) {
-    const cartItem = this.find(item => item.productId === productId)
+userSchema.methods.addToCart = async function(productId, quantity, availableAmount) {
+    const cartItem = this.cart.find(item => item.productId.toString() === productId.toString())
     
+    quantity = parseInt(quantity)
+
     if (cartItem) {
+        if(cartItem.quantity + quantity > availableAmount) {
+            const error = new Error(`Not enough products in stock. Only ${availableAmount} left. You already have ${cartItem.quantity} in the cart.`);
+            error.name = "StockError";
+            throw error
+        }     
+
+
         cartItem.quantity += quantity;
     } else {
         this.cart.push({ productId, quantity });
@@ -148,6 +157,15 @@ userSchema.methods.addToCart = async function(productId, quantity) {
     return await this.save() 
 
 }
+
+userSchema.methods.clearCart = async function() {
+    this.cart = []
+    return await this.save()
+}
+
+userSchema.methods.getCart = async function() {
+    return this.cart
+};
 
 userSchema.methods.updateFirstName = async function(newFirstName) {
     if (!newFirstName) throw new Error("First name didn't change. Invalid value.");

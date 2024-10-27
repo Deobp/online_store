@@ -18,7 +18,9 @@ import {
   updateCity,
   updateStreet,
   updateHouse,
-  updateApartment
+  updateApartment,
+  clearCart,
+  viewCart
 } from '../controllers/userController.js';
 
 import {
@@ -42,7 +44,9 @@ router.put('/:id', authenticateToken, updateUser);
 
 router.delete('/:id', authenticateToken, isAdmin, deleteUser);
 
-router.post('/:id/cart', addToCart);
+router.route("/:id/cart").get(authenticateToken, viewCart).post(authenticateToken, addToCart);
+
+router.post('/:id/cart/clear', authenticateToken, clearCart);
 
 router.patch('/:id/username', authenticateToken, updateUsername);
 
