@@ -12,7 +12,8 @@ import {
     updateProductPrice,
     updateProductQuantity,
     updateProductCategoryId,
-    updateProductImagePath
+    updateProductImagePath,
+    getActualProducts
 } from '../controllers/productController.js';
 
 import {
@@ -22,13 +23,16 @@ import {
 
 const router = express.Router();
 
-router.post("/", authenticateToken, isAdmin, createProduct).get("/", getProducts);
+router.route("/")
+  .post(authenticateToken, isAdmin, createProduct)
+  .get(getProducts);
 
-router.get('/:id', getProductById);
+router.get("/actual", getActualProducts)
 
-router.put('/:id', authenticateToken, isAdmin, updateProductById);
-
-router.delete('/:id', authenticateToken, isAdmin, deleteProductById);
+router.route("/:id")
+  .get(getProductById)
+  .put(authenticateToken, isAdmin, updateProductById)
+  .delete(authenticateToken, isAdmin, deleteProductById)
 
 router.patch("/:id/name", authenticateToken, isAdmin, updateProductName)
 

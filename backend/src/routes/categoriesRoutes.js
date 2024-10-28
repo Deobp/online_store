@@ -18,13 +18,20 @@ import {
 
 const router = express.Router()
 
-router.route("/").get(getAllCategories).post(authenticateToken, isAdmin, createCategory);
-router.route("/:id").get(getCategoryById).put(authenticateToken, isAdmin, updateCategoryById).delete(authenticateToken, isAdmin, deleteCategory);
+router.route("/")
+  .get(getAllCategories)
+  .post(authenticateToken, isAdmin, createCategory)
 
-router.route("/:id/products").get(getProductsByCategoryId)
+router.route("/:id")
+  .get(getCategoryById)
+  .put(authenticateToken, isAdmin, updateCategoryById)
+  .delete(authenticateToken, isAdmin, deleteCategory)
 
-router.route("/:id/name").patch(authenticateToken, isAdmin, updateCategoryName)
-router.route("/:id/description").patch(authenticateToken, isAdmin, updateCategoryDescr)
+router.get("/:id/products", getProductsByCategoryId)
+
+router.patch("/:id/name", authenticateToken, isAdmin, updateCategoryName)
+
+router.patch("/:id/description", authenticateToken, isAdmin, updateCategoryDescr)
 
 
 export default router

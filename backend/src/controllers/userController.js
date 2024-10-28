@@ -30,7 +30,7 @@ export const getUserById = async (req, res) => {
   }
 };
 
-export const createUser = async (req, res) => {
+/*export const createUser = async (req, res) => {
   const {
     firstName,
     lastName,
@@ -66,10 +66,14 @@ export const createUser = async (req, res) => {
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
-};
+};*/
 
 export const updateUser = async (req, res) => {
   try {
+    const { role } = req.body
+
+    if(role) return res.status(400).json({ message: "Body parameter 'role' not allowed."});
+    
     const { id } = req.params
     
     if(req.user.id !== id) {
@@ -120,6 +124,8 @@ export const addToCart = async (req,res) => {
     
       if (!product)
           return res.status(404).json({ message: "Product with this id not found" })
+
+      if(product.isEnded) return res.status(400).json({ message: "Out of stock." })
 
       if(parseInt(quantity) > product.quantity)
           return res.status(400).json({ message: "Not enough products in stock." })

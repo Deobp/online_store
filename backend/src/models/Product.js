@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const nameRegEx = /^[A-Za-z0-9][A-Za-z0-9\s&,.()-]*[A-Za-z0-9).]$/ // letters, numbers, spaces, &, comma, dot, brackets, hyphen
+const nameRegEx = /^[A-Za-z0-9][A-Za-z0-9\s&,.()/-]*[A-Za-z0-9).]$/ // letters, numbers, spaces, &, comma, dot, brackets, hyphen
 const descrRegEx = /^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/ // letters, numbers, spaces, punctuation marks, quotes, special chars like @#$%
 
 const productSchema = new mongoose.Schema({
@@ -24,7 +24,7 @@ const productSchema = new mongoose.Schema({
     imagePath: {
         type: String,
         required: true,
-        default: "https://picsum.photos/200/300",
+        default: "/img/products/default.png",
         trim: true,
     },
     price: {
@@ -42,6 +42,11 @@ const productSchema = new mongoose.Schema({
         ref: 'Category',
         required: true
     },
+    isEnded: { 
+        type: Boolean, 
+        required: true,
+        default: false
+    }
 
 },
     {
@@ -86,15 +91,48 @@ productSchema.methods.updateName = async function(newName) {
   };
 
   productSchema.methods.updateQuantity = async function(newQuantity) {
-    if (!newQuantity) throw new Error("Product's quantity didn't change. Invalid value.");
+    if (newQuantity === undefined || newQuantity === null) throw new Error("Product's quantity didn't change. Invalid value.");
       
     if(newQuantity === this.quantity) throw new Error("Product's quantity didn't change. Same value entered.");
     
+    if(newQuantity === 0) this.isEnded = true
+
+    if(this.quantity === 0) this.isEnded = false
+
     this.quantity = newQuantity;
     
     return await this.save();
     
   };
+
+  productSchema.methods.increaseQuantity = async function(amount) {
+    if(!amount || amount < 0) throw new Error("Product's quantity didn't change. Invalid value entered.")
+    
+    if(amount === 0) throw new Error("Product's quantity didn't change. You entered 0.")
+    
+    return await this.updateQuantity(this.quantity + amount)
+}
+
+productSchema.methods.decreaseQuantity = async function(amount) {
+    amount = parseInt(amount)
+
+    if(this.isEnded)
+        throw new Error("Product's quantity didn't change. Out of stock.")
+    
+    if(!amount || amount < 0) throw new Error("Product's quantity didn't change. Invalid value entered.")
+
+    if(amount === 0) throw new Error("Product's quantity didn't change. You entered 0.")
+    
+    if(amount > this.quantity)
+        throw new Error("Product's quantity didn't change. Not enough products in stock.")
+    
+    /*if(amount === this.quantity) {
+        await this.deleteOne()
+        return 0
+    }*/
+    
+    return await this.updateQuantity(this.quantity - amount)
+}
 
   productSchema.methods.updateCategoryId = async function(newCategoryId) {
     if (!newCategoryId) throw new Error("Category ID didn't change. Invalid value.");
@@ -118,31 +156,7 @@ productSchema.methods.updateName = async function(newName) {
     
   };
 
-productSchema.methods.increaseQuantity = async function(amount) {
-    if(!amount || amount < 0) throw new Error("Product's quantity didn't change. Invalid value entered.")
-    
-    if(amount === 0) throw new Error("Product's quantity didn't change. You entered 0.")
-    
-    return await this.updateQuantity(this.quantity + amount)
-}
 
-productSchema.methods.decreaseQuantity = async function(amount) {
-    amount = parseInt(amount)
-    
-    if(!amount || amount < 0) throw new Error("Product's quantity didn't change. Invalid value entered.")
-
-    if(amount === 0) throw new Error("Product's quantity didn't change. You entered 0.")
-    
-    if(amount > this.quantity)
-        throw new Error("Product's quantity didn't change. Not enough products in stock.")
-    
-    if(amount === this.quantity) {
-        await this.deleteOne()
-        return 0
-    }
-    
-    return await this.updateQuantity(this.quantity - amount)
-}
 
 const Product = mongoose.model("Product", productSchema);
 

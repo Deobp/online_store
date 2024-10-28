@@ -30,6 +30,16 @@ export const getProducts = async (req, res) => {
     }
   };
 
+  export const getActualProducts = async (req, res) => {
+    try {
+      const products = await Product.find({ isEnded: false });
+      if(!products.length) return res.status(200).json({ message: "no products in stock" });
+      res.status(200).json(products);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
 export const getProductById = async (req, res) => {
   const { id } = req.params;
 
@@ -46,6 +56,15 @@ export const getProductById = async (req, res) => {
 
 export const updateProductById = async (req, res) => {
   const { id } = req.params;
+
+  const { price, quantity, isEnded } = req.body  
+
+  if(isEnded) return res.status(400).json({ message: "Body parameter 'isEnded' not allowed."});
+
+  if(typeof price !== "number") return res.status(400).json({ message: "Body parameter 'price' must be a number."});
+
+  if(typeof quantity !== "number") return res.status(400).json({ message: "Body parameter 'quantity' must be a number."});
+
   const updates = req.body;
 
   try {
@@ -55,7 +74,9 @@ export const updateProductById = async (req, res) => {
       }
       res.status(200).json(updatedProduct);
   } catch (error) {
-    if (error.name === "ValidationError" || error.code === 11000)
+    if(error.code === 11000)
+        return res.status(400).json({ message: 'Product name must be unique.', additionalInfo: error.message });
+    if (error.name === "ValidationError")
         return res.status(400).json({ message: error.message })
 
       res.status(400).json({ message: error.message });
@@ -72,15 +93,57 @@ export const deleteProductById = async (req, res) => {
       }
       res.status(200).json({ message: 'Product deleted successfully' });
   } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(500).json({ message: error.message });
   }
 };
 
+export async function updateProductQuantity(req, res, next) {
+        const receivedKeys = Object.keys(req.body)
+        
+        if(receivedKeys.length > 1) 
+            return res.status(400).json({ message: "Too many parameters. Only 'quantity' is expected." })
+        
+        const {quantity} = req.body
+
+        if(quantity === undefined || quantity === null)
+            return res.status(400).json({ message: "Quantity is missing" })
+
+        if(typeof quantity !== "number") 
+            return res.status(400).json({ message: "Body parameter 'quantity' must be a number."});
+        
+        const { id } = req.params
+        
+    try {    
+        const product = await Product.findById(id)
+
+        if (!product)
+           return res.status(404).json({ message: "Product not found" })
+
+        await product.updateQuantity(quantity)
+       
+        res.status(200).json({ message: "Product's quantity updated successfully", product});
+    } catch (error) {
+        if (error.message.includes("didn't change") || error.name === "ValidationError")
+            return res.status(400).json({ message: error.message })
+
+        res.status(500).json({ message: error.message });
+    }
+}
+
 export const increaseProductQuantity = async (req, res) => {
-  const { id } = req.params;
-  const { amount } = req.body;
-  if (!amount)
-    return res.status(400).json({ message: "Amount is missing" })
+    const receivedKeys = Object.keys(req.body)
+    
+    if(receivedKeys.length > 1) 
+        return res.status(400).json({ message: "Too many parameters. Only 'amount' is expected." })
+  
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    if(amount === undefined || amount === null)
+        return res.status(400).json({ message: "Amount is missing" })
+
+  if(typeof amount !== "number") return res.status(400).json({ message: "Body parameter 'amount' must be a number."});
+
   try {
       const product = await Product.findById(id);
       if (!product) {
@@ -98,10 +161,16 @@ export const increaseProductQuantity = async (req, res) => {
 };
 
 export const decreaseProductQuantity = async (req, res) => {
-  const { id } = req.params;
-  const { amount } = req.body;
-  if (!amount)
-    return res.status(400).json({ message: "Amount is missing" })
+    const receivedKeys = Object.keys(req.body)
+    
+    if(receivedKeys.length > 1) 
+        return res.status(400).json({ message: "Too many parameters. Only 'amount' is expected." })
+  
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    if(amount === undefined || amount === null)
+        return res.status(400).json({ message: "Amount is missing" })
 
   try {
       const product = await Product.findById(id);
@@ -110,10 +179,10 @@ export const decreaseProductQuantity = async (req, res) => {
       }
 
       const result = await product.decreaseQuantity(amount);
-      if (result) {
+      //if (result) {
           return res.status(200).json({ message: 'Product quantity decreased', product });
-      }
-      res.status(200).json({ message: 'Product removed due to quantity reaching 0' });
+      //}
+      //res.status(200).json({ message: 'Product removed due to quantity reaching 0' });
   } catch (error) {
       if (error.message.includes("didn't change") || error.name === "ValidationError")
         return res.status(400).json({ message: error.message })
@@ -198,31 +267,7 @@ export async function updateProductPrice(req, res, next) {
     }
 }
 
-export async function updateProductQuantity(req, res, next) {
-    try {
-        const { id } = req.params
-        
-        
-        const product = await Product.findById(id)
 
-        if (!product)
-           return res.status(404).json({ message: "Product not found" })
-
-        const {quantity} = req.body
-
-        if (!quantity)
-            return res.status(400).json({ message: "Quantity is missing" })
-
-        await product.updateQuantity(quantity)
-       
-        res.status(200).json({ message: "Product's quantity updated successfully"});
-    } catch (error) {
-        if (error.message.includes("didn't change") || error.name === "ValidationError")
-            return res.status(400).json({ message: error.message })
-
-        res.status(500).json({ message: error.message });
-    }
-}
  
  
 export async function updateProductCategoryId(req, res, next) {

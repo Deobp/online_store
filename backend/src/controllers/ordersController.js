@@ -34,31 +34,39 @@ export async function getOrderById(req, res, next) {
 export async function createOrder(req, res, next) {
     try {
         const {userId} = req.body
+
         if(!userId)
             return res.status(400).json({ message: "User ID is missing" })
+
+        if(req.user.id !== userId) {
+            if(req.user.role !== "admin")
+              return res.status(403).json({ message: "Access denied, you are not admin or this is not your data."})
+          }
         
-        const user = await User.findById(userId)
+        const user = await User.findById(userId).populate("cart.productId");
 
         if(!user)
             return res.status(400).json({ message: "User not found." })
 
         if (user.cart.length === 0) 
-            return res.status(400).json({ message: "User's cart is empty" })
+            return res.status(400).json({ message: "User's cart is empty." })
         const products = []
         let total = 0
         for (const item of user.cart) {
-            products.push({
+            console.log(item)
+            console.log(item.productId.price)
+            /*products.push({
                 productId: item.productId._id,
                 priceAtPurchase: item.productId.price,
                 quantity: item.quantity
             })
 
-            total += item.productId.price * item.quantity
+            total += item.productId.price * item.quantity*/
 
         }
         
-        const newOrder = Order({userId, products, total})
-        await newOrder.save()
+        /*const newOrder = Order({userId, products, total})
+        await newOrder.save()*/
 
     } catch(error) {
         res.status(500).json({ message: error.message })

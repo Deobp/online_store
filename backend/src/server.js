@@ -13,7 +13,11 @@ import productRoute from "./routes/productRoute.js"
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+    origin: true, // * + credentials
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }))
 
 app.use(helmet())
 

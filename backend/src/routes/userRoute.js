@@ -2,7 +2,6 @@ import express from 'express';
 import {
   getUsers,
   getUserById,
-  createUser,
   updateUser,
   deleteUser,
   addToCart,
@@ -38,15 +37,14 @@ router.post("/logout", logout)
 // get all users
 router.get('/', authenticateToken, isAdmin, getUsers);
 
-router.get('/:id', authenticateToken, getUserById);
+router.route("/:id")
+  .get(authenticateToken, getUserById)
+  .put(authenticateToken, updateUser)
+  .delete(authenticateToken, isAdmin, deleteUser)
 
-///router.post('/', createUser);
-
-router.put('/:id', authenticateToken, updateUser);
-
-router.delete('/:id', authenticateToken, isAdmin, deleteUser);
-
-router.route("/:id/cart").get(authenticateToken, viewCart).post(authenticateToken, addToCart);
+router.route("/:id/cart")
+  .get(authenticateToken, viewCart)
+  .post(authenticateToken, addToCart)
 
 router.post('/:id/cart/clear', authenticateToken, clearCart);
 
@@ -71,7 +69,5 @@ router.patch('/:id/street', authenticateToken, updateStreet);
 router.patch('/:id/house', authenticateToken, updateHouse);
 
 router.patch('/:id/apartment', authenticateToken, updateApartment);
-
-
 
 export default router;
