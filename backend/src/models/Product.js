@@ -2,13 +2,14 @@ import mongoose from "mongoose";
 
 const nameRegEx = /^[A-Za-z0-9][A-Za-z0-9\s&,.()/-]*[A-Za-z0-9).]$/ // letters, numbers, spaces, &, comma, dot, brackets, hyphen
 const descrRegEx = /^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/ // letters, numbers, spaces, punctuation marks, quotes, special chars like @#$%
+const imagePathRegEx = /^(https?:\/\/[\w-]+\.[\w-]+\.|\/)?[\w/-]+\.(png|jpg|jpeg)$/i
 
 const productSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
         unique: true,
-        match: [nameRegEx, "Only english letters, spaces, quotes and '-' allowed."],
+        match: [nameRegEx, "Only english letters, numbers, spaces, quotes and '-' allowed."],
         minlength: [3, "Name should be equal or more than 3 letters."],
         maxlength: [100, "Name shouldn't be more than 100 letters."],
         trim: true,
@@ -24,6 +25,7 @@ const productSchema = new mongoose.Schema({
     imagePath: {
         type: String,
         required: true,
+        match: [imagePathRegEx, "Only PNG, JPG, JPEG files allowed."],
         default: "/img/products/default.png",
         trim: true,
     },
