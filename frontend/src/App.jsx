@@ -3,14 +3,18 @@ import { AuthProvider } from './context/AuthContext';
 import Products from './pages/Products';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Navigation from './pages/Navigation'; // Adjust the import path as necessary
-import './App.css'; // Import the CSS file
+import Navigation from './pages/Navigation'; 
+import Cart from './pages/Cart';
+import './App.css';
+import ProtectedComponent from './pages/ProtectedComponent'; 
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Navigation />
+        <ProtectedComponent/>
+        <Cart />
         <Routes>
           <Route path="/" element={<Products />} />
           <Route path="/login" element={<Login />} />
