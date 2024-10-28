@@ -21,7 +21,7 @@ const Products = () => {
             setLoading(true);
             const url = selectedCategory 
                 ? `http://localhost:3000/api/categories/${selectedCategory}/products`
-                : 'http://localhost:3000/api/products';
+                : 'http://localhost:3000/api/products/actual';
 
             const response = await fetch(url);
             if (!response.ok) {
