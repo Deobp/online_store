@@ -13,11 +13,12 @@ function Login() {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:3000/api/users/login', { username, password });
-            login(res.data.token, res.data.userId);
-            navigate('/'); 
+            await axios.post('http://localhost:3000/api/users/login', { username, password }, { withCredentials: true });
+            login();
+            navigate('/');
         } catch (err) {
             console.error('Login failed', err);
+        
         }
     };
 

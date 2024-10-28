@@ -1,11 +1,11 @@
 import { useEffect, useState, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext'; // Import AuthContext
-import './Cart.css'; // You can create your own styles for the cart
+import { AuthContext } from '../context/AuthContext'; 
+import './Cart.css'; 
 
 const Cart = () => {
-    const { token, userId } = useContext(AuthContext); // Access token and userId from context
+    const { token, userId } = useContext(AuthContext); 
     const [cartItems, setCartItems] = useState([]);
-    const [isCartVisible, setIsCartVisible] = useState(true); // State to toggle cart visibility
+    const [isCartVisible, setIsCartVisible] = useState(true); 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -13,14 +13,14 @@ const Cart = () => {
         if (isCartVisible) {
             fetchCartItems();
         }
-    }, [isCartVisible]); // Fetch cart items when the cart is visible
+    }, [isCartVisible]); 
 
     const fetchCartItems = async () => {
         try {
             setLoading(true);
             const response = await fetch(`http://localhost:3000/api/users/${userId}/cart`, {
                 headers: {
-                    'Authorization': `Bearer ${token}` // Include token for authentication
+                    'Authorization': `Bearer ${token}` 
                 }
             });
             if (!response.ok) {
@@ -44,7 +44,7 @@ const Cart = () => {
             const response = await fetch(`http://localhost:3000/api/users/${userId}/cart/clear`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}` // Include token for authentication
+                    'Authorization': `Bearer ${token}`
                 }
             });
 
@@ -52,7 +52,7 @@ const Cart = () => {
                 throw new Error('Failed to clear cart');
             }
 
-            setCartItems([]); // Clear cart items from state
+            setCartItems([]);
             alert('Cart cleared successfully!');
         } catch (error) {
             console.error(error);

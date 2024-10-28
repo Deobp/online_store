@@ -1,34 +1,36 @@
+// context/Auth.js
 import { createContext, useState, useEffect } from 'react';
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-    const [token, setToken] = useState(null);
-    const [userId, setUserId] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUserId = localStorage.getItem('userId');
-        if (storedToken) setToken(storedToken);
-        if (storedUserId) setUserId(storedUserId);
+        const checkAuth = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/users/profile', { credentials: 'include' });
+                if (response.ok) {
+                    setIsAuthenticated(true);
+                } else {
+                    setIsAuthenticated(false);
+                }
+            } catch (error) {
+                console.error('Error checking authentication status', error);
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
     }, []);
 
-    const login = (newToken, newUserId) => {
-        setToken(newToken);
-        setUserId(newUserId);
-        localStorage.setItem('token', newToken);
-        localStorage.setItem('userId', newUserId);
-    };
-
+    const login = () => setIsAuthenticated(true);
     const logout = () => {
-        setToken(null);
-        setUserId(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
+        setIsAuthenticated(false);
     };
 
     return (
-        <AuthContext.Provider value={{ token, userId, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
