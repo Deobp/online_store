@@ -3,7 +3,6 @@ import {
     createProduct,
     getProducts,
     getProductById, 
-    updateProductById, 
     deleteProductById, 
     increaseProductQuantity, 
     decreaseProductQuantity, 
@@ -13,7 +12,8 @@ import {
     updateProductQuantity,
     updateProductCategoryId,
     updateProductImagePath,
-    getActualProducts
+    getActualProducts,
+    fullUpdateProductById
 } from '../controllers/productController.js';
 
 import {
@@ -31,7 +31,7 @@ router.get("/actual", getActualProducts)
 
 router.route("/:id")
   .get(getProductById)
-  .put(authenticateToken, isAdmin, updateProductById)
+  .put(authenticateToken, isAdmin, fullUpdateProductById)
   .delete(authenticateToken, isAdmin, deleteProductById)
 
 router.patch("/:id/name", authenticateToken, isAdmin, updateProductName)

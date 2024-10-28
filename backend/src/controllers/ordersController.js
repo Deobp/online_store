@@ -45,28 +45,32 @@ export async function createOrder(req, res, next) {
         
         const user = await User.findById(userId).populate("cart.productId");
 
+        console.log(user)
+
         if(!user)
             return res.status(400).json({ message: "User not found." })
 
         if (user.cart.length === 0) 
             return res.status(400).json({ message: "User's cart is empty." })
         const products = []
-        let total = 0
+        let totalPrice = 0
         for (const item of user.cart) {
-            console.log(item)
+           /*console.log(item)
             console.log(item.productId.price)
-            /*products.push({
+            console.log(item.productId._id)*/
+            products.push({
                 productId: item.productId._id,
                 priceAtPurchase: item.productId.price,
                 quantity: item.quantity
             })
 
-            total += item.productId.price * item.quantity*/
+            totalPrice += item.productId.price * item.quantity
 
         }
         
-        /*const newOrder = Order({userId, products, total})
-        await newOrder.save()*/
+        const newOrder = Order({userId, products, totalPrice})
+        await newOrder.save()
+        user.clearCart()
 
     } catch(error) {
         res.status(500).json({ message: error.message })

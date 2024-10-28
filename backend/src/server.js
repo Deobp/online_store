@@ -1,38 +1,38 @@
 import dotenv from "dotenv";
-dotenv.config({path: "./src/config/.env"})
+dotenv.config({ path: "./src/config/.env" });
 import express from "express";
-import cookieParser from "cookie-parser"
-import connectDb from "./config/db.js"
-import cors from 'cors'
-import helmet from "helmet"
-import categoriesRoutes from "./routes/categoriesRoutes.js"
-import ordersRoutes from "./routes/ordersRoutes.js"
-import userRoute from "./routes/userRoute.js"
-import productRoute from "./routes/productRoute.js"
+import cookieParser from "cookie-parser";
+import connectDb from "./config/db.js";
+import cors from "cors";
+import helmet from "helmet";
+import categoriesRoutes from "./routes/categoriesRoutes.js";
+import ordersRoutes from "./routes/ordersRoutes.js";
+import userRoute from "./routes/userRoute.js";
+import productRoute from "./routes/productRoute.js";
 
+const app = express();
 
-const app = express()
-
-app.use(cors({
+// security options
+app.use(
+  cors({
     origin: true, // * + credentials
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
-  }))
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use(helmet())
+app.use(helmet());
 
-app.use(express.json())
+app.use(express.json());
 
 app.use(cookieParser());
 
-
-app.use("/api/users", userRoute)
-app.use("/api/products", productRoute)
-app.use("/api/categories", categoriesRoutes)
-app.use("/api/orders", ordersRoutes)
-
+app.use("/api/users", userRoute);
+app.use("/api/products", productRoute);
+app.use("/api/categories", categoriesRoutes);
+app.use("/api/orders", ordersRoutes);
 
 app.listen(process.env.PORT, () => {
-    console.log(`Server is running on ${process.env.PORT}`)
-    connectDb()
-})
+  console.log(`Server is running on ${process.env.PORT}`);
+  connectDb();
+});

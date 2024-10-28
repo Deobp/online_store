@@ -1,39 +1,31 @@
-import express from "express"
+import express from "express";
 
 import {
-    getAllCategories,
-    getCategoryById,
-    createCategory,
-    updateCategoryById,
-    updateCategoryName,
-    updateCategoryDescr,
-    deleteCategory,
-    getProductsByCategoryId
-  } from "../controllers/categoriesController.js"
+  getAllCategories,
+  getCategoryById,
+  createCategory,
+  deleteCategory,
+  getProductsByCategoryId,
+  fullUpdateCategoryById,
+  partialUpdateCategoryById,
+} from "../controllers/categoriesController.js";
 
-  import {
-    authenticateToken,
-    isAdmin
-  } from "../middlewares/auth.js"
+import { authenticateToken, isAdmin } from "../middlewares/auth.js";
 
-const router = express.Router()
+const router = express.Router();
 
-router.route("/")
+router
+  .route("/")
   .get(getAllCategories)
-  .post(authenticateToken, isAdmin, createCategory)
+  .post(authenticateToken, isAdmin, createCategory);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(getCategoryById)
-  .put(authenticateToken, isAdmin, updateCategoryById)
-  .delete(authenticateToken, isAdmin, deleteCategory)
+  .put(authenticateToken, isAdmin, fullUpdateCategoryById)
+  .patch(authenticateToken, isAdmin, partialUpdateCategoryById)
+  .delete(authenticateToken, isAdmin, deleteCategory);
 
-router.get("/:id/products", getProductsByCategoryId)
+router.get("/:id/products", getProductsByCategoryId);
 
-router.patch("/:id/name", authenticateToken, isAdmin, updateCategoryName)
-
-router.patch("/:id/description", authenticateToken, isAdmin, updateCategoryDescr)
-
-
-export default router
-
-
+export default router;

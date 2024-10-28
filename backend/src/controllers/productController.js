@@ -3,10 +3,68 @@ import Product from "../models/Product.js";
 
 // creating new Product
 export const createProduct = async (req, res) => {
-  const { name, description, price, quantity, categoryId, imagePath } =
-    req.body; // collecting body parameters
+  const receivedKeys = Object.keys(req.body); // collecting keys to count
 
-  // validation of some body parameters
+  // we are expecting not more than 6 parameters
+  if (receivedKeys.length > 6)
+    return res
+      .status(400)
+      .json({ message: "Too many parameters. Not more than 6 are expected." });
+
+  // we are expecting not less than 5 parameters
+  if (receivedKeys.length < 5)
+    return res
+      .status(400)
+      .json({ message: "Not enough parameters. Should be min. 5." });
+
+  // parameters are strictly defined
+  const allowedParams = [
+    "name",
+    "description",
+    "price",
+    "quantity",
+    "categoryId",
+    "imagePath",
+  ];
+
+  // if there is smth else...
+  const isBodyValid = receivedKeys.every(function (key) {
+    return allowedParams.includes(key);
+  });
+
+  // ...BAD REQUEST
+  if (!isBodyValid)
+    return res.status(400).json({ message: "Invalid parameters in body" });
+
+  // collecting body parameters
+  const { name, description, price, quantity, categoryId, imagePath } =
+    req.body;
+
+  // if name is missing
+  if (name === undefined || name === null)
+    return res.status(400).json({ message: "Parameter 'name' is missing" });
+
+  // if description is missing
+  if (description === undefined || description === null)
+    return res
+      .status(400)
+      .json({ message: "Parameter 'description' is missing" });
+
+  // if quantity is missing
+  if (quantity === undefined || quantity === null)
+    return res.status(400).json({ message: "Parameter 'quantity' is missing" });
+
+  // if price is missing
+  if (price === undefined || price === null)
+    return res.status(400).json({ message: "Parameter 'price' is missing" });
+
+  // if categoryId is missing
+  if (categoryId === undefined || categoryId === null)
+    return res
+      .status(400)
+      .json({ message: "Parameter 'categoryId' is missing" });
+
+  // validation of body parameters
   if (typeof price !== "number")
     return res
       .status(400)
@@ -16,6 +74,27 @@ export const createProduct = async (req, res) => {
     return res
       .status(400)
       .json({ message: "Body parameter 'quantity' must be a number." });
+
+  if (typeof name !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'name' must be a string." });
+
+  if (typeof description !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'description' must be a string." });
+
+  if (typeof categoryId !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'categoryId' must be a string." });
+
+  // optional parameter
+  if (imagePath !== undefined && typeof imagePath !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'imagePath' must be a string." });
 
   try {
     const newProduct = new Product({
@@ -28,7 +107,9 @@ export const createProduct = async (req, res) => {
     });
 
     const savedProduct = await newProduct.save();
-    res.status(201).json(savedProduct);
+    res
+      .status(201)
+      .json({ message: "New product successfully created.", savedProduct });
   } catch (error) {
     // error code for duplicated data
     if (error.code === 11000)
@@ -81,22 +162,79 @@ export const getProductById = async (req, res) => {
     }
     res.status(200).json(product);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid productId", additionalInfo: error.message });
+
+    res.status(500).json({ message: error.message });
   }
 };
 
 // Updating one particular product
-export const updateProductById = async (req, res) => {
-  const { id } = req.params;
+export const fullUpdateProductById = async (req, res) => {
+  const receivedKeys = Object.keys(req.body); // collecting keys to count
 
-  const { price, quantity, isEnded } = req.body; // collecting body parameters
-
-  // restricted parameter in body
-  if (isEnded)
+  // we are expecting not more than 6 parameters
+  if (receivedKeys.length > 6)
     return res
       .status(400)
-      .json({ message: "Body parameter 'isEnded' not allowed." });
+      .json({ message: "Too many parameters. Not more than 6 are expected." });
 
+  // we are expecting not less than 5 parameters
+  if (receivedKeys.length < 5)
+    return res
+      .status(400)
+      .json({ message: "Not enough parameters. Should be min. 5." });
+
+  // parameters are strictly defined
+  const allowedParams = [
+    "name",
+    "description",
+    "price",
+    "quantity",
+    "categoryId",
+    "imagePath",
+  ];
+
+  // if there is smth else...
+  const isBodyValid = receivedKeys.every(function (key) {
+    return allowedParams.includes(key);
+  });
+
+  // ...BAD REQUEST
+  if (!isBodyValid)
+    return res.status(400).json({ message: "Invalid parameters in body" });
+
+  // collecting body parameters
+  const { name, description, price, quantity, categoryId, imagePath } =
+    req.body;
+
+  // if name is missing
+  if (name === undefined || name === null)
+    return res.status(400).json({ message: "Parameter 'name' is missing" });
+
+  // if description is missing
+  if (description === undefined || description === null)
+    return res
+      .status(400)
+      .json({ message: "Parameter 'description' is missing" });
+
+  // if quantity is missing
+  if (quantity === undefined || quantity === null)
+    return res.status(400).json({ message: "Parameter 'quantity' is missing" });
+
+  // if price is missing
+  if (price === undefined || price === null)
+    return res.status(400).json({ message: "Parameter 'price' is missing" });
+
+  // if categoryId is missing
+  if (categoryId === undefined || categoryId === null)
+    return res
+      .status(400)
+      .json({ message: "Parameter 'categoryId' is missing" });
+
+  // validation of body parameters
   if (typeof price !== "number")
     return res
       .status(400)
@@ -106,6 +244,29 @@ export const updateProductById = async (req, res) => {
     return res
       .status(400)
       .json({ message: "Body parameter 'quantity' must be a number." });
+
+  if (typeof name !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'name' must be a string." });
+
+  if (typeof description !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'description' must be a string." });
+
+  if (typeof categoryId !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'categoryId' must be a string." });
+
+  // optional parameter
+  if (imagePath !== undefined && typeof imagePath !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'imagePath' must be a string." });
+
+  const { id } = req.params;
 
   const updates = req.body;
 
@@ -119,7 +280,9 @@ export const updateProductById = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json(updatedProduct);
+    res
+      .status(200)
+      .json({ message: "Product successfully updated", updatedProduct });
   } catch (error) {
     // error code for duplicated data
     if (error.code === 11000)
@@ -130,8 +293,14 @@ export const updateProductById = async (req, res) => {
 
     if (error.name === "ValidationError")
       return res.status(400).json({ message: error.message });
+    
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid productId", additionalInfo: error.message });
 
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -148,6 +317,12 @@ export const deleteProductById = async (req, res) => {
 
     res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
+    // invalid id
+    if (error.name === "CastError")
+        return res
+          .status(400)
+          .json({ message: "Invalid productId", additionalInfo: error.message });
+          
     res.status(500).json({ message: error.message });
   }
 };
