@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext'; // Import AuthContext
 import './Products.css';
 
 const Products = () => {
+    const { token, userId } = useContext(AuthContext); // Access the token and userId from context
     const [products, setProducts] = useState([]);
-    const [categories, setCategories] = useState([]); 
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -11,12 +13,12 @@ const Products = () => {
     useEffect(() => {
         fetchCategories();
         fetchAllProducts();
-    }, []); 
+    }, []);
 
     const fetchAllProducts = async () => {
         try {
             setLoading(true);
-            const response = await fetch('http://localhost:3000/api/products');
+            const response = await fetch('http://localhost:3000/api/products/actual');
             if (!response.ok) {
                 throw new Error('Failed to fetch products');
             }
@@ -47,8 +49,27 @@ const Products = () => {
         setSelectedCategory(categoryId);
     };
 
-    const handleAddToCart = (product) => {
-        console.log(`Added ${product.name} to cart`);
+    // Function to add product to cart
+    const handleAddToCart = async (product) => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/users/${userId}/cart`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Include token for authentication
+                },
+                body: JSON.stringify({ productId: product._id }) // Send product ID to backend
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add product to cart');
+            }
+
+            const result = await response.json();
+            console.log(`Added ${product.name} to cart:`, result);
+        } catch (error) {
+            console.error(error);
+        }
     };
 
     const filteredProducts = selectedCategory

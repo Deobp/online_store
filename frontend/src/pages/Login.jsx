@@ -1,3 +1,4 @@
+// components/Login.js
 import { useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -11,11 +12,10 @@ function Login() {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-
         try {
             const res = await axios.post('http://localhost:3000/api/users/login', { username, password });
-            login(res.data.token);
-            navigate('/');
+            login(res.data.token, res.data.userId);
+            navigate('/'); 
         } catch (err) {
             console.error('Login failed', err);
         }
@@ -44,4 +44,3 @@ function Login() {
 }
 
 export default Login;
-
