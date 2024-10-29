@@ -50,17 +50,17 @@ export const updateUser = async (req, res) => {
     if (receivedKeys.length === 0)
       return res.status(400).json({ message: "No parameters in body." });
 
-    // we are expecting not more than 6 parameters
+    // we are expecting not more than 11 parameters
     if (receivedKeys.length > 11)
       return res.status(400).json({
         message: "Too many parameters. Not more than 6 are expected.",
       });
 
-    // we are expecting not less than 5 parameters
+    // we are expecting not less than 10 parameters
     if (receivedKeys.length < 10)
       return res
         .status(400)
-        .json({ message: "Not enough parameters. Should be min. 5." });
+        .json({ message: "Not enough parameters. Should be min. 10." });
 
     // parameters are strictly defined
     const allowedParams = [
@@ -271,6 +271,36 @@ export const deleteUser = async (req, res) => {
 
 // adding to cart
 export const addToCart = async (req, res) => {
+  const receivedKeys = Object.keys(req.body); // collecting keys to count
+
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
+  // we are expecting not more than 2 parameters
+  if (receivedKeys.length > 2)
+    return res.status(400).json({
+      message: "Too many parameters. Not more than 6 are expected.",
+    });
+
+  // we are expecting not less than 2 parameters
+  if (receivedKeys.length < 2)
+    return res
+      .status(400)
+      .json({ message: "Not enough parameters. Should be 2." });
+
+  // parameters are strictly defined
+  const allowedParams = ["productId", "quantity"];
+
+  // if there is smth else...
+  const isBodyValid = receivedKeys.every(function (key) {
+    return allowedParams.includes(key);
+  });
+
+  // ...BAD REQUEST
+  if (!isBodyValid)
+    return res.status(400).json({ message: "Invalid parameters in body" });
+
   let { id } = req.params;
 
   if (id === "me") id = req.user.id;
@@ -284,11 +314,30 @@ export const addToCart = async (req, res) => {
 
   const { productId, quantity } = req.body;
 
-  if (!productId)
-    return res.status(400).json({ message: "Product ID is missing" });
+  // if productId is missing
+  if (productId === undefined || productId === null)
+    return res
+      .status(400)
+      .json({ message: "Parameter 'productId' is missing" });
 
-  if (!quantity)
-    return res.status(400).json({ message: "Product's quantity is missing" });
+  // if quantity is missing
+  if (quantity === undefined || quantity === null)
+    return res.status(400).json({ message: "Parameter 'quantity' is missing" });
+
+  if (typeof productId !== "string")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'productId' must be a string." });
+
+  if (typeof quantity !== "number")
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'quantity' must be a number." });
+
+  if (quantity < 1)
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'quantity' must be >= 1." });
 
   try {
     const product = await Product.findById(productId);
