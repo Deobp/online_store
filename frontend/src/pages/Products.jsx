@@ -52,13 +52,14 @@ const Products = () => {
     // Function to add product to cart
     const handleAddToCart = async (product) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/users/${userId}/cart`, {
+            const response = await fetch(`http://localhost:3000/api/users/me/cart`, {
                 method: 'POST',
+                 credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` // Include token for authentication
+                    'Content-Type': 'application/json'//,
+                    //'Authorization': `Bearer ${token}` // Include token for authentication
                 },
-                body: JSON.stringify({ productId: product._id }) // Send product ID to backend
+                body: JSON.stringify({ productId: product._id, quantity: 1 }) // Send product ID to backend
             });
 
             if (!response.ok) {

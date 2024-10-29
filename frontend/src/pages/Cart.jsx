@@ -18,15 +18,18 @@ const Cart = () => {
     const fetchCartItems = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:3000/api/users/${userId}/cart`, {
-                headers: {
+            const response = await fetch(`http://localhost:3000/api/users/me/cart`, {
+                method: 'GET',
+                credentials: 'include'
+                /*headers: {
                     'Authorization': `Bearer ${token}` 
-                }
+                }*/
             });
             if (!response.ok) {
                 throw new Error('Failed to fetch cart items');
             }
             const data = await response.json();
+
             setCartItems(data);
             setLoading(false);
         } catch (error) {
@@ -41,11 +44,12 @@ const Cart = () => {
 
     const handleClearCart = async () => {
         try {
-            const response = await fetch(`http://localhost:3000/api/users/${userId}/cart/clear`, {
+            const response = await fetch(`http://localhost:3000/api/users/me/cart/clear`, {
                 method: 'POST',
-                headers: {
+                credentials: 'include'
+                /*headers: {
                     'Authorization': `Bearer ${token}`
-                }
+                }*/
             });
 
             if (!response.ok) {
