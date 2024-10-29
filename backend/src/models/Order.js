@@ -26,7 +26,7 @@ const orderSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["pending", "completed", "shipped", "cancelled"],
+      enum: ["pending", "shipping", "completed", "cancelled"],
       default: "pending",
     },
     totalPrice: {
@@ -53,13 +53,7 @@ orderSchema.virtual("totalQuantity").get(function () {
 });
 
 orderSchema.methods.updateStatus = async function (newStatus) {
-  const validStatuses = [
-    "pending",
-    "paid",
-    "shipped",
-    "delivered",
-    "cancelled",
-  ];
+  const validStatuses = ["pending", "shipping", "completed", "cancelled"];
 
   if (validStatuses.includes(newStatus)) {
     this.status = newStatus;
@@ -99,7 +93,6 @@ orderSchema.methods.addProduct = async function (productId, quantity) {
   return await this.save();
 };
 
-
 orderSchema.methods.removeProduct = async function (productId, quantity) {
   const product = await mongoose.model("Product").findById(productId);
 
@@ -113,17 +106,16 @@ orderSchema.methods.removeProduct = async function (productId, quantity) {
 
   if (productIndex !== -1) {
     this.products.increaseQuantity(quantity);
-    
   } else {
     return { message: "Product not found in the order." };
   }
-  
+
   if (this.product[productIndex].quantity < 1) {
     this.products = this.products.filter((item) => {
       if (String(productId) !== String(item.productId)) {
         return item;
       }
-    })
+    });
   }
 
   return await this.save();
@@ -148,4 +140,4 @@ const Order = mongoose.model("Order", orderSchema);
 
 //module.exports = { Order };
 
-export default Order
+export default Order;

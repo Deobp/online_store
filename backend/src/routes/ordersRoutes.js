@@ -15,13 +15,11 @@ import {
 
 const router = express.Router()
 
-router.route("/")
-    .get(authenticateToken, isAdmin, getAllOrders)
-    .post(authenticateToken, createOrder)
+router.get("/", authenticateToken, isAdmin, getAllOrders)
 
 router.route("/:id")
     .get(authenticateToken, getOrderById)
     .patch(authenticateToken, isAdmin, updateStatus)
-    .delete(authenticateToken, isAdmin, deleteOrder) // modify to allow user delete his order in some statuses
+    .delete(authenticateToken, isAdmin, deleteOrder)
 
 export default router

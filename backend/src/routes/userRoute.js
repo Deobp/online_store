@@ -24,6 +24,7 @@ import {
 } from "../controllers/userController.js";
 
 import { authenticateToken, isAdmin } from "../middlewares/auth.js";
+import { createOrder } from "../controllers/ordersController.js";
 
 const router = express.Router();
 
@@ -46,6 +47,8 @@ router
   .post(authenticateToken, addToCart);
 
 router.post("/:id/cart/clear", authenticateToken, clearCart);
+
+router.post("/:id/orders", authenticateToken, createOrder)
 
 router.patch("/:id/username", authenticateToken, updateUsername);
 

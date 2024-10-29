@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import jwt from "../utils/jwt.js";
 import bcrypt from "bcrypt";
 
+// getting all users
 export const getUsers = async (req, res) => {
   try {
     const users = await User.find();
@@ -14,6 +15,7 @@ export const getUsers = async (req, res) => {
   }
 };
 
+// getting one particular user
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -29,18 +31,198 @@ export const getUserById = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json(user);
   } catch (error) {
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid userId", additionalInfo: error.message });
+
     res.status(500).json({ message: error.message });
   }
 };
 
+// full updating of user
 export const updateUser = async (req, res) => {
   try {
-    const { role } = req.body;
+    const receivedKeys = Object.keys(req.body); // collecting keys to count
 
-    if (role)
+    // ignoring empty body
+    if (receivedKeys.length === 0)
+      return res.status(400).json({ message: "No parameters in body." });
+
+    // we are expecting not more than 6 parameters
+    if (receivedKeys.length > 11)
+      return res.status(400).json({
+        message: "Too many parameters. Not more than 6 are expected.",
+      });
+
+    // we are expecting not less than 5 parameters
+    if (receivedKeys.length < 10)
       return res
         .status(400)
-        .json({ message: "Body parameter 'role' not allowed." });
+        .json({ message: "Not enough parameters. Should be min. 5." });
+
+    // parameters are strictly defined
+    const allowedParams = [
+      "firstName",
+      "lastName",
+      "username",
+      "password",
+      "email",
+      "phone",
+      "country",
+      "city",
+      "street",
+      "house",
+      "apartment",
+    ];
+
+    // if there is smth else...
+    const isBodyValid = receivedKeys.every(function (key) {
+      return allowedParams.includes(key);
+    });
+
+    // ...BAD REQUEST
+    if (!isBodyValid)
+      return res.status(400).json({ message: "Invalid parameters in body" });
+
+    // collecting body parameters
+    const {
+      firstName,
+      lastName,
+      username,
+      password,
+      email,
+      phone,
+      country,
+      city,
+      street,
+      house,
+      apartment,
+    } = req.body;
+
+    // if firstName is missing
+    if (firstName === undefined || firstName === null)
+      return res
+        .status(400)
+        .json({ message: "Parameter 'firstName' is missing" });
+
+    // if lastName is missing
+    if (lastName === undefined || lastName === null)
+      return res
+        .status(400)
+        .json({ message: "Parameter 'lastName' is missing" });
+
+    // if username is missing
+    if (username === undefined || username === null)
+      return res
+        .status(400)
+        .json({ message: "Parameter 'username' is missing" });
+
+    // if password is missing
+    if (password === undefined || password === null)
+      return res
+        .status(400)
+        .json({ message: "Parameter 'password' is missing" });
+
+    // if email is missing
+    if (email === undefined || email === null)
+      return res.status(400).json({ message: "Parameter 'email' is missing" });
+
+    // if phone is missing
+    if (phone === undefined || phone === null)
+      return res.status(400).json({ message: "Parameter 'phone' is missing" });
+
+    // if country is missing
+    if (country === undefined || country === null)
+      return res
+        .status(400)
+        .json({ message: "Parameter 'country' is missing" });
+
+    // if city is missing
+    if (city === undefined || city === null)
+      return res.status(400).json({ message: "Parameter 'city' is missing" });
+
+    // if street is missing
+    if (street === undefined || street === null)
+      return res.status(400).json({ message: "Parameter 'street' is missing" });
+
+    // if house is missing
+    if (house === undefined || house === null)
+      return res.status(400).json({ message: "Parameter 'house' is missing" });
+
+    // validation of body parameters
+    if (typeof house !== "number")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'house' must be a number." });
+
+    if (house < 1)
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'house' must be >= 1." });
+
+    if (!Number.isInteger(house))
+      return res.status(400).json({ message: "House must be an Integer." });
+
+    // optional parameter
+    if (apartment !== undefined && typeof apartment !== "number")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'apartment' must be a number." });
+
+    if (apartment < 1)
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'apartment' must be >= 1." });
+
+    if (!Number.isInteger(apartment))
+      return res.status(400).json({ message: "apartment must be an Integer." });
+
+    if (typeof firstName !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'firstName' must be a string." });
+
+    if (typeof lastName !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'lastName' must be a string." });
+
+    if (typeof username !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'username' must be a string." });
+
+    if (typeof password !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'password' must be a string." });
+
+    if (typeof email !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'email' must be a string." });
+
+    if (typeof phone !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'phone' must be a string." });
+
+    if (typeof country !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'country' must be a string." });
+
+    if (typeof city !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'city' must be a string." });
+
+    if (typeof street !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'street' must be a string." });
 
     const { id } = req.params;
 
@@ -57,7 +239,8 @@ export const updateUser = async (req, res) => {
     });
     if (!updatedUser)
       return res.status(404).json({ message: "User not found" });
-    res.status(200).json(updatedUser);
+
+    res.status(200).json({ message: "User successfully updated", updatedUser });
   } catch (error) {
     if (error.name === "ValidationError" || error.code === 11000)
       return res.status(400).json({ message: error.message });
@@ -66,6 +249,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// deleting user
 export const deleteUser = async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
@@ -75,10 +259,17 @@ export const deleteUser = async (req, res) => {
       .status(200)
       .json({ message: "User deleted successfully", deletedUser: deletedUser });
   } catch (error) {
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid userId", additionalInfo: error.message });
+
     res.status(500).json({ message: error.message });
   }
 };
 
+// adding to cart
 export const addToCart = async (req, res) => {
   let { id } = req.params;
 

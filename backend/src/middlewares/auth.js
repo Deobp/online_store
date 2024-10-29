@@ -1,16 +1,11 @@
 import jwt from "../utils/jwt.js";
 
 export async function authenticateToken(req, res, next) {
-  /*const authHeader = req.headers.authorization
-
-    if (!authHeader || !authHeader.startsWith('Bearer '))*/
   const token = req.cookies.token; // get token
   if (!token)
     return res
       .status(401)
       .json({ message: "Access denied, token is missing." });
-
-  //const token = authHeader.split(" ")[1]
 
   try {
     const verifiedUser = jwt.verifyToken(token);

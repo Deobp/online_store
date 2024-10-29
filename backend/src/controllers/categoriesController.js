@@ -235,6 +235,7 @@ export const partialUpdateCategoryById = async (req, res) => {
 
       if (category.description !== params.description) {
         await category.updateDescription(params.description);
+        
         changesControl.push("Category description updated. ");
       } else
         changesControl.push(
