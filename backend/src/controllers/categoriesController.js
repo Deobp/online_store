@@ -200,32 +200,23 @@ export const partialUpdateCategoryById = async (req, res) => {
 
   const params = req.body;
 
-  // if name exists => check the type
-  if (params.name !== undefined) {
-    if (typeof params.name !== "string")
-      return res
-        .status(400)
-        .json({ message: "Body parameter 'name' must be a string." });
-  }
-
-  // if description exists => check the type
-  if (params.description !== undefined) {
-    if (typeof params.description !== "string")
-      return res
-        .status(400)
-        .json({ message: "Body parameter 'description' must be a string." });
-  }
-
   const { id } = req.params;
 
   try {
     const category = await Category.findById(id);
+
     if (!category)
       return res.status(404).json({ message: "Category not found" });
 
     let changesControl = [];
 
+    // if name exists => check the type
     if (params.name !== undefined) {
+      if (typeof params.name !== "string")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'name' must be a string." });
+
       if (category.name !== params.name) {
         await category.updateName(params.name);
         changesControl.push("Category name updated. ");
@@ -235,7 +226,13 @@ export const partialUpdateCategoryById = async (req, res) => {
         );
     }
 
+    // if description exists => check the type
     if (params.description !== undefined) {
+      if (typeof params.description !== "string")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'description' must be a string." });
+
       if (category.description !== params.description) {
         await category.updateDescription(params.description);
         changesControl.push("Category description updated. ");
@@ -244,6 +241,7 @@ export const partialUpdateCategoryById = async (req, res) => {
           "Category description didn't change. Same value entered. "
         );
     }
+
     res.status(200).json({ messages: changesControl, category });
   } catch (error) {
     // error code for duplicated data

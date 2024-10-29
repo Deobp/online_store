@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   getUsers,
   getUserById,
@@ -20,54 +20,53 @@ import {
   updateApartment,
   clearCart,
   viewCart,
-  logout
-} from '../controllers/userController.js';
+  logout,
+} from "../controllers/userController.js";
 
-import {
-  authenticateToken,
-  isAdmin
-} from "../middlewares/auth.js"
+import { authenticateToken, isAdmin } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser)
-router.post("/login", verifyUser)
-router.post("/logout", logout)
+router.post("/register", registerUser);
+router.post("/login", verifyUser);
+router.post("/logout", logout);
 
 // get all users
-router.get('/', authenticateToken, isAdmin, getUsers);
+router.get("/", authenticateToken, isAdmin, getUsers);
 
-router.route("/:id")
+router
+  .route("/:id")
   .get(authenticateToken, getUserById)
   .put(authenticateToken, updateUser)
-  .delete(authenticateToken, isAdmin, deleteUser)
+  .delete(authenticateToken, isAdmin, deleteUser);
 
-router.route("/:id/cart")
+router
+  .route("/:id/cart")
   .get(authenticateToken, viewCart)
-  .post(authenticateToken, addToCart)
+  .post(authenticateToken, addToCart);
 
-router.post('/:id/cart/clear', authenticateToken, clearCart);
+router.post("/:id/cart/clear", authenticateToken, clearCart);
 
-router.patch('/:id/username', authenticateToken, updateUsername);
+router.patch("/:id/username", authenticateToken, updateUsername);
 
-router.patch('/:id/password', authenticateToken, updatePassword);
+router.patch("/:id/password", authenticateToken, updatePassword);
 
-router.patch('/:id/first-name', authenticateToken, updateFirstName);
+router.patch("/:id/first-name", authenticateToken, updateFirstName);
 
-router.patch('/:id/last-name', authenticateToken, updateLastName);
+router.patch("/:id/last-name", authenticateToken, updateLastName);
 
-router.patch('/:id/email', authenticateToken, updateEmail);
+router.patch("/:id/email", authenticateToken, updateEmail);
 
-router.patch('/:id/phone', authenticateToken, updatePhone);
+router.patch("/:id/phone", authenticateToken, updatePhone);
 
-router.patch('/:id/country', authenticateToken, updateCountry);
+router.patch("/:id/country", authenticateToken, updateCountry);
 
-router.patch('/:id/city', authenticateToken, updateCity);
+router.patch("/:id/city", authenticateToken, updateCity);
 
-router.patch('/:id/street', authenticateToken, updateStreet);
+router.patch("/:id/street", authenticateToken, updateStreet);
 
-router.patch('/:id/house', authenticateToken, updateHouse);
+router.patch("/:id/house", authenticateToken, updateHouse);
 
-router.patch('/:id/apartment', authenticateToken, updateApartment);
+router.patch("/:id/apartment", authenticateToken, updateApartment);
 
 export default router;
