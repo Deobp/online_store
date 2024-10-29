@@ -38,6 +38,10 @@ export async function getCategoryById(req, res, next) {
 export async function createCategory(req, res, next) {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
   // we are expecting not more than 2 parameters
   if (receivedKeys.length > 2)
     return res
@@ -91,6 +95,10 @@ export async function createCategory(req, res, next) {
 // full updating 1 particular category
 export const fullUpdateCategoryById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
+
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
 
   // we are expecting not more than 2 parameters
   if (receivedKeys.length > 2)
@@ -168,6 +176,10 @@ export const fullUpdateCategoryById = async (req, res) => {
 export const partialUpdateCategoryById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
   // we are expecting not more than 2 parameters
   if (receivedKeys.length > 2)
     return res
@@ -188,23 +200,21 @@ export const partialUpdateCategoryById = async (req, res) => {
 
   const params = req.body;
 
-  // if name is missing
-  if (params.name === undefined || params.name === null)
-    return res.status(400).json({ message: "Parameter 'name' is missing" });
+  // if name exists => check the type
+  if (params.name !== undefined) {
+    if (typeof params.name !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'name' must be a string." });
+  }
 
-  if (typeof params.name !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'name' must be a string." });
-
-  // optional parameter
-  if (
-    params.description !== undefined &&
-    typeof params.description !== "string"
-  )
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'description' must be a string." });
+  // if description exists => check the type
+  if (params.description !== undefined) {
+    if (typeof params.description !== "string")
+      return res
+        .status(400)
+        .json({ message: "Body parameter 'description' must be a string." });
+  }
 
   const { id } = req.params;
 
@@ -215,19 +225,24 @@ export const partialUpdateCategoryById = async (req, res) => {
 
     let changesControl = [];
 
-    if (category.name !== params.name) {
-      await category.updateName(params.name);
-      changesControl.push("Category name updated. ");
-    } else
-      changesControl.push("Category name didn't change. Same value entered. ");
+    if (params.name !== undefined) {
+      if (category.name !== params.name) {
+        await category.updateName(params.name);
+        changesControl.push("Category name updated. ");
+      } else
+        changesControl.push(
+          "Category name didn't change. Same value entered. "
+        );
+    }
 
     if (params.description !== undefined) {
       if (category.description !== params.description) {
         await category.updateDescription(params.description);
         changesControl.push("Category description updated. ");
       } else
-        changesControl +=
-          "Category description didn't change. Same value entered. ";
+        changesControl.push(
+          "Category description didn't change. Same value entered. "
+        );
     }
     res.status(200).json({ messages: changesControl, category });
   } catch (error) {

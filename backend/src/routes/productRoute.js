@@ -6,14 +6,9 @@ import {
     deleteProductById, 
     increaseProductQuantity, 
     decreaseProductQuantity, 
-    updateProductName,
-    updateProductDescr,
-    updateProductPrice,
-    updateProductQuantity,
-    updateProductCategoryId,
-    updateProductImagePath,
     getActualProducts,
-    fullUpdateProductById
+    fullUpdateProductById,
+    partialUpdateProductById
 } from '../controllers/productController.js';
 
 import {
@@ -32,24 +27,13 @@ router.get("/actual", getActualProducts)
 router.route("/:id")
   .get(getProductById)
   .put(authenticateToken, isAdmin, fullUpdateProductById)
+  .patch(authenticateToken, isAdmin, partialUpdateProductById)
   .delete(authenticateToken, isAdmin, deleteProductById)
 
-router.patch("/:id/name", authenticateToken, isAdmin, updateProductName)
-
-router.patch("/:id/description", authenticateToken, isAdmin, updateProductDescr)
-
-router.patch("/:id/price", authenticateToken, isAdmin, updateProductPrice)
-
-router.patch("/:id/quantity", authenticateToken, isAdmin, updateProductQuantity)
-
-router.patch("/:id/category-id", authenticateToken, isAdmin, updateProductCategoryId)
-
-router.patch("/:id/image-path", authenticateToken, isAdmin, updateProductImagePath)
-
 // Increase product quantity
-router.patch('/:id/increase', authenticateToken, isAdmin, increaseProductQuantity);
+router.patch('/:id/increase-quantity', authenticateToken, isAdmin, increaseProductQuantity);
 
 // Decrease product quantity
-router.patch('/:id/decrease', authenticateToken, isAdmin, decreaseProductQuantity);
+router.patch('/:id/decrease-quantity', authenticateToken, isAdmin, decreaseProductQuantity);
 
 export default router;

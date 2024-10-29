@@ -5,6 +5,10 @@ import Product from "../models/Product.js";
 export const createProduct = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
   // we are expecting not more than 6 parameters
   if (receivedKeys.length > 6)
     return res
@@ -70,10 +74,23 @@ export const createProduct = async (req, res) => {
       .status(400)
       .json({ message: "Body parameter 'price' must be a number." });
 
+  if (price <= 0)
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'price' must be > 0." });
+
   if (typeof quantity !== "number")
     return res
       .status(400)
       .json({ message: "Body parameter 'quantity' must be a number." });
+
+  if (quantity < 0)
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'quantity' must be > 0." });
+
+  if (!Number.isInteger(quantity))
+    return res.status(400).json({ message: "Quantity must be an Integer." });
 
   if (typeof name !== "string")
     return res
@@ -97,6 +114,13 @@ export const createProduct = async (req, res) => {
       .json({ message: "Body parameter 'imagePath' must be a string." });
 
   try {
+    const category = await Category.findById(params.categoryId);
+
+    if (!category)
+      return res
+        .status(400)
+        .json({ message: "Invalid categoryId. Category not exists." });
+
     const newProduct = new Product({
       name,
       description,
@@ -107,6 +131,7 @@ export const createProduct = async (req, res) => {
     });
 
     const savedProduct = await newProduct.save();
+
     res
       .status(201)
       .json({ message: "New product successfully created.", savedProduct });
@@ -175,6 +200,10 @@ export const getProductById = async (req, res) => {
 export const fullUpdateProductById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
   // we are expecting not more than 6 parameters
   if (receivedKeys.length > 6)
     return res
@@ -240,10 +269,23 @@ export const fullUpdateProductById = async (req, res) => {
       .status(400)
       .json({ message: "Body parameter 'price' must be a number." });
 
+  if (price <= 0)
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'price' must be > 0." });
+
   if (typeof quantity !== "number")
     return res
       .status(400)
       .json({ message: "Body parameter 'quantity' must be a number." });
+
+  if (quantity < 0)
+    return res
+      .status(400)
+      .json({ message: "Body parameter 'quantity' must be > 0." });
+
+  if (!Number.isInteger(quantity))
+    return res.status(400).json({ message: "Quantity must be an Integer." });
 
   if (typeof name !== "string")
     return res
@@ -268,10 +310,17 @@ export const fullUpdateProductById = async (req, res) => {
 
   const { id } = req.params;
 
-  const updates = req.body;
+  const params = req.body;
 
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(id, updates, {
+    const category = await Category.findById(params.categoryId);
+
+    if (!category)
+      return res
+        .status(400)
+        .json({ message: "Invalid categoryId. Category not exists." });
+
+    const updatedProduct = await Product.findByIdAndUpdate(id, params, {
       new: true,
       runValidators: true,
     });
@@ -293,7 +342,7 @@ export const fullUpdateProductById = async (req, res) => {
 
     if (error.name === "ValidationError")
       return res.status(400).json({ message: error.message });
-    
+
     // invalid id
     if (error.name === "CastError")
       return res
@@ -319,62 +368,198 @@ export const deleteProductById = async (req, res) => {
   } catch (error) {
     // invalid id
     if (error.name === "CastError")
-        return res
-          .status(400)
-          .json({ message: "Invalid productId", additionalInfo: error.message });
-          
+      return res
+        .status(400)
+        .json({ message: "Invalid productId", additionalInfo: error.message });
+
     res.status(500).json({ message: error.message });
   }
 };
 
-// Updating quantity of one particular product
-export async function updateProductQuantity(req, res, next) {
+// partial updating 1 particular product
+export const partialUpdateProductById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
-  // we are expecting only 1 parameter
-  if (receivedKeys.length > 1)
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
+  // we are expecting not more than 6 parameters
+  if (receivedKeys.length > 6)
     return res
       .status(400)
-      .json({ message: "Too many parameters. Only 'quantity' is expected." });
+      .json({ message: "Too many parameters. Not more than 6 are expected." });
 
-  const { quantity } = req.body; // collecting data
+  // parameters are strictly defined
+  const allowedParams = [
+    "name",
+    "description",
+    "price",
+    "quantity",
+    "categoryId",
+    "imagePath",
+  ];
 
-  // if quantity is missing
-  if (quantity === undefined || quantity === null)
-    return res.status(400).json({ message: "Quantity is missing" });
+  // if there is smth else...
+  const isBodyValid = receivedKeys.every(function (key) {
+    return allowedParams.includes(key);
+  });
 
-  // if it is not a number
-  if (typeof quantity !== "number")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'quantity' must be a number." });
+  // ...BAD REQUEST
+  if (!isBodyValid)
+    return res.status(400).json({ message: "Invalid parameters in body" });
+
+  const params = req.body;
 
   const { id } = req.params;
 
   try {
     const product = await Product.findById(id);
-
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    await product.updateQuantity(quantity);
+    // looking for changes
+    let changesControl = [];
 
-    res
-      .status(200)
-      .json({ message: "Product's quantity updated successfully", product });
+    // if name exists => check the type
+    if (params.name !== undefined) {
+      if (typeof params.name !== "string")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'name' must be a string." });
+
+      if (product.name !== params.name) {
+        await product.updateName(params.name);
+        changesControl.push("Product name updated.");
+      } else
+        changesControl.push("Product name didn't change. Same value entered.");
+    }
+
+    // if description => check the type
+    if (params.description !== undefined) {
+      if (typeof params.description !== "string")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'description' must be a string." });
+
+      if (product.description !== params.description) {
+        await product.updateDescription(params.description);
+        changesControl.push("Product description updated.");
+      } else
+        changesControl.push(
+          "Product description didn't change. Same value entered."
+        );
+    }
+
+    // if price => check the type
+    if (params.price !== undefined) {
+      if (typeof params.price !== "number")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'price' must be a number." });
+
+      if (params.price <= 0)
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'price' must be > 0." });
+
+      if (product.price !== params.price) {
+        await product.updatePrice(params.price);
+        changesControl.push("Product price updated.");
+      } else
+        changesControl.push("Product price didn't change. Same value entered.");
+    }
+
+    // if quantity => check the type
+    if (params.quantity !== undefined) {
+      if (typeof params.quantity !== "number")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'quantity' must be a number." });
+
+      if (params.quantity < 0)
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'quantity' must be >= 0." });
+
+      if (!Number.isInteger(params.quantity))
+        return res
+          .status(400)
+          .json({ message: "Quantity must be an Integer." });
+
+      if (product.quantity !== params.quantity) {
+        await product.updateQuantity(params.quantity);
+        changesControl.push("Product quantity updated.");
+      } else
+        changesControl.push(
+          "Product quantity didn't change. Same value entered."
+        );
+    }
+
+    // if categoryId => check the type
+    if (params.categoryId !== undefined) {
+      if (typeof params.categoryId !== "string")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'categoryId' must be a string." });
+
+      if (product.categoryId.toString() !== params.categoryId) {
+        const category = await Category.findById(params.categoryId);
+
+        if (!category)
+          return res
+            .status(400)
+            .json({ message: "Invalid categoryId. Category not exists." });
+
+        await product.updateCategoryId(params.categoryId);
+
+        changesControl.push("categoryId updated. ");
+      } else
+        changesControl.push("categoryId didn't change. Same value entered.");
+    }
+
+    // if imagePath => check the type
+    if (params.imagePath !== undefined) {
+      if (typeof params.imagePath !== "string")
+        return res
+          .status(400)
+          .json({ message: "Body parameter 'imagePath' must be a string." });
+
+      if (product.imagePath !== params.imagePath) {
+        await product.updateImagePath(params.imagePath);
+        changesControl.push("imagePath updated. ");
+      } else
+        changesControl.push("imagePath didn't change. Same value entered.");
+    }
+
+    res.status(200).json({ messages: changesControl, product });
   } catch (error) {
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError"
-    )
+    // error code for duplicated data
+    if (error.code === 11000)
+      return res.status(400).json({
+        message: "Product name must be unique.",
+        additionalInfo: error.message,
+      });
+
+    if (error.name === "ValidationError")
       return res.status(400).json({ message: error.message });
+
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid Id", additionalInfo: error.message });
 
     res.status(500).json({ message: error.message });
   }
-}
+};
 
 // increasing quantity of 1 particular product
 export const increaseProductQuantity = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
+
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
 
   // we are expecting only 1 parameter
   if (receivedKeys.length > 1)
@@ -395,6 +580,14 @@ export const increaseProductQuantity = async (req, res) => {
       .status(400)
       .json({ message: "Body parameter 'amount' must be a number." });
 
+  if (amount <= 0)
+    return res
+      .status(400)
+      .json({ message: "The increasing amount must be > 0" });
+
+  if (!Number.isInteger(amount))
+    return res.status(400).json({ message: "Amount must be an Integer." });
+
   try {
     const product = await Product.findById(id);
     if (!product) {
@@ -402,13 +595,17 @@ export const increaseProductQuantity = async (req, res) => {
     }
 
     await product.increaseQuantity(amount);
+
     res.status(200).json({ message: "Product quantity increased", product });
   } catch (error) {
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError"
-    )
+    if (error.name === "ValidationError")
       return res.status(400).json({ message: error.message });
+
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid productId", additionalInfo: error.message });
 
     res.status(500).json({ message: error.message });
   }
@@ -418,6 +615,10 @@ export const increaseProductQuantity = async (req, res) => {
 export const decreaseProductQuantity = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
+  // ignoring empty body
+  if (receivedKeys.length === 0)
+    return res.status(400).json({ message: "No parameters in body." });
+
   // we are expecting only 1 parameter
   if (receivedKeys.length > 1)
     return res
@@ -437,11 +638,30 @@ export const decreaseProductQuantity = async (req, res) => {
       .status(400)
       .json({ message: "Body parameter 'amount' must be a number." });
 
+  if (amount <= 0)
+    return res
+      .status(400)
+      .json({ message: "The increasing amount must be > 0" });
+
+  if (!Number.isInteger(amount))
+    return res.status(400).json({ message: "Amount must be an Integer." });
+
   try {
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    if (product.isEnded)
+      return res
+        .status(400)
+        .json({ message: "Product's quantity didn't change. Out of stock." });
+
+    if (amount > product.quantity)
+      return res.status(400).json({
+        message:
+          "Product's quantity didn't change. Not enough products in stock.",
+      });
 
     const result = await product.decreaseQuantity(amount);
 
@@ -459,239 +679,3 @@ export const decreaseProductQuantity = async (req, res) => {
   }
 };
 
-// Updating product's name
-export async function updateProductName(req, res, next) {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting only 1 parameter
-  if (receivedKeys.length > 1)
-    return res
-      .status(400)
-      .json({ message: "Too many parameters. Only 'name' is expected." });
-
-  const { id } = req.params;
-  const { name } = req.body;
-
-  // if name is missing
-  if (name === undefined || name === null)
-    return res.status(400).json({ message: "Name is missing" });
-
-  // if it is not a string
-  if (typeof name !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'name' must be a string." });
-
-  try {
-    const product = await Product.findById(id);
-
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    await product.updateName(name);
-
-    res
-      .status(200)
-      .json({ message: "Product's name updated successfully", product });
-  } catch (error) {
-    // error code for duplicated data
-    if (error.code === 11000)
-      return res.status(400).json({
-        message: "Product name must be unique.",
-        additionalInfo: error.message,
-      });
-
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError"
-    )
-      return res.status(400).json({ message: error.message });
-
-    res.status(500).json({ message: error.message });
-  }
-}
-
-// Updating product's description
-export async function updateProductDescr(req, res, next) {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting only 1 parameter
-  if (receivedKeys.length > 1)
-    return res.status(400).json({
-      message: "Too many parameters. Only 'description' is expected.",
-    });
-  const { id } = req.params;
-
-  const { description } = req.body;
-
-  // if description is missing
-  if (description === undefined || description === null)
-    return res.status(400).json({ message: "Description is missing" });
-
-  // if it is not a string
-  if (typeof description !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'description' must be a string." });
-
-  try {
-    const product = await Product.findById(id);
-
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    await product.updateDescription(description);
-
-    res
-      .status(200)
-      .json({ message: "Product's description updated successfully", product });
-  } catch (error) {
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError"
-    )
-      return res.status(400).json({ message: error.message });
-
-    res.status(500).json({ message: error.message });
-  }
-}
-
-// Updating product's price
-export async function updateProductPrice(req, res, next) {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting only 1 parameter
-  if (receivedKeys.length > 1)
-    return res.status(400).json({
-      message: "Too many parameters. Only 'price' is expected.",
-    });
-
-  const { id } = req.params;
-
-  const { price } = req.body;
-
-  // if price is missing
-  if (price === undefined || price === null)
-    return res.status(400).json({ message: "Price is missing" });
-
-  // if it is not a number
-  if (typeof price !== "number")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'price' must be a string." });
-
-  try {
-    const product = await Product.findById(id);
-
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    await product.updatePrice(price);
-
-    res
-      .status(200)
-      .json({ message: "Product's price updated successfully", product });
-  } catch (error) {
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError"
-    )
-      return res.status(400).json({ message: error.message });
-
-    res.status(500).json({ message: error.message });
-  }
-}
-
-// Updating categoryId
-export async function updateProductCategoryId(req, res, next) {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting only 1 parameter
-  if (receivedKeys.length > 1)
-    return res.status(400).json({
-      message: "Too many parameters. Only 'categoryId' is expected.",
-    });
-
-  const { id } = req.params;
-
-  const { categoryId } = req.body;
-
-  // if categoryId is missing
-  if (categoryId === undefined || categoryId === null)
-    return res.status(400).json({ message: "Category ID is missing" });
-
-  // if it is not a string
-  if (typeof categoryId !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'categoryId' must be a string." });
-
-  try {
-    const product = await Product.findById(id);
-
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    const category = await Category.findById(categoryId);
-
-    if (!category)
-      return res
-        .status(404)
-        .json({ message: "Category with this id not found" });
-
-    await product.updateCategoryId(categoryId);
-
-    res
-      .status(200)
-      .json({ message: "Category ID updated successfully", product });
-  } catch (error) {
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError" ||
-      error.name === "CastError"
-    )
-      return res.status(400).json({ message: error.message });
-
-    res.status(500).json({ message: error.message });
-  }
-}
-
-// Updating imagePath
-export async function updateProductImagePath(req, res, next) {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting only 1 parameter
-  if (receivedKeys.length > 1)
-    return res.status(400).json({
-      message: "Too many parameters. Only 'categoryId' is expected.",
-    });
-
-  const { id } = req.params;
-
-  const { imagePath } = req.body;
-
-  // if imagePath is missing
-  if (imagePath === undefined || imagePath === null)
-    return res.status(400).json({ message: "imagePath is missing" });
-
-  // if it is not a string
-  if (typeof imagePath !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'imagePath' must be a string." });
-
-  try {
-    const product = await Product.findById(id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
-
-    await product.updateImagePath(imagePath);
-
-    res
-      .status(200)
-      .json({ message: "Product's image path updated successfully", product });
-  } catch (error) {
-    if (
-      error.message.includes("didn't change") ||
-      error.name === "ValidationError"
-    )
-      return res.status(400).json({ message: error.message });
-
-    res.status(500).json({ message: error.message });
-  }
-}
