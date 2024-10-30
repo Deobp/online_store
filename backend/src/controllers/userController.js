@@ -28,7 +28,9 @@ export const getUserById = async (req, res) => {
     }
 
     const user = await User.findById(id);
+
     if (!user) return res.status(404).json({ message: "User not found" });
+
     res.status(200).json(user);
   } catch (error) {
     // invalid id
@@ -369,7 +371,10 @@ export const addToCart = async (req, res) => {
   }
 };
 
+// clearing cart
 export async function clearCart(req, res) {
+  
+  
   let { id } = req.params;
 
   if (id === "me") id = req.user.id;
@@ -381,14 +386,26 @@ export async function clearCart(req, res) {
       });
   }
 
-  const user = await User.findById(id);
+  try {
+    const user = await User.findById(id);
 
-  if (!user)
-    return res.status(404).json({ message: "User with this ID not found" });
+    if (!user)
+      return res.status(404).json({ message: "User with this ID not found" });
 
-  await user.clearCart();
+    await user.clearCart();
 
-  res.status(200).json({ message: "User's cart is cleared.", cart: user.cart });
+    res
+      .status(200)
+      .json({ message: "User's cart is cleared.", cart: user.cart });
+  } catch (error) {
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid userId", additionalInfo: error.message });
+
+    res.status(500).json({ message: error.message });
+  }
 }
 
 export async function viewCart(req, res) {
@@ -784,7 +801,7 @@ export async function verifyUser(req, res, next) {
     maxAge: 3600000, // 1h
   });
 
-  res.status(200).json({ message: "User authorized", token });
+  res.status(200).json({ message: "User authorized" /*, token*/ });
 }
 
 export async function registerUser(req, res, next) {
@@ -862,7 +879,9 @@ export async function registerUser(req, res, next) {
       httpOnly: true,
       maxAge: 3600000, // 1h
     });
-    res.status(201).json({ message: "User registered successfully", token });
+    res
+      .status(201)
+      .json({ message: "User registered successfully" /*, token */ });
   } catch (error) {
     if (error.name === "ValidationError" || error.code === 11000)
       return res.status(400).json({ message: error.message });

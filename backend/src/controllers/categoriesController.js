@@ -36,11 +36,7 @@ export async function getCategoryById(req, res, next) {
 
 // Creating category
 export async function createCategory(req, res, next) {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // ignoring empty body
-  if (receivedKeys.length === 0)
-    return res.status(400).json({ message: "No parameters in body." });
+  /*const receivedKeys = Object.keys(req.body); // collecting keys to count
 
   // we are expecting not more than 2 parameters
   if (receivedKeys.length > 2)
@@ -75,9 +71,11 @@ export async function createCategory(req, res, next) {
   if (description !== undefined && typeof description !== "string")
     return res
       .status(400)
-      .json({ message: "Body parameter 'description' must be a string." });
+      .json({ message: "Body parameter 'description' must be a string." });*/
 
   try {
+    const { name, description } = req.body;
+    
     const newCategory = Category({ name, description });
 
     const result = await newCategory.save();
@@ -95,10 +93,6 @@ export async function createCategory(req, res, next) {
 // full updating 1 particular category
 export const fullUpdateCategoryById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // ignoring empty body
-  if (receivedKeys.length === 0)
-    return res.status(400).json({ message: "No parameters in body." });
 
   // we are expecting not more than 2 parameters
   if (receivedKeys.length > 2)
@@ -175,10 +169,6 @@ export const fullUpdateCategoryById = async (req, res) => {
 // partial updating 1 particular category
 export const partialUpdateCategoryById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // ignoring empty body
-  if (receivedKeys.length === 0)
-    return res.status(400).json({ message: "No parameters in body." });
 
   // we are expecting not more than 2 parameters
   if (receivedKeys.length > 2)
