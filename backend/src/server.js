@@ -45,7 +45,7 @@ app.use("/api/products", productRoute);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/orders", ordersRoutes);
 
-// handling JSON parsing error
+// handling JSON parsing errors
 app.use(jsonParsingErrorHandler);
 
 app.listen(process.env.PORT, () => {

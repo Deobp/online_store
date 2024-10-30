@@ -36,46 +36,9 @@ export async function getCategoryById(req, res, next) {
 
 // Creating category
 export async function createCategory(req, res, next) {
-  /*const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting not more than 2 parameters
-  if (receivedKeys.length > 2)
-    return res
-      .status(400)
-      .json({ message: "Too many parameters. Not more than 2 are expected." });
-
-  // parameters are strictly defined
-  const allowedParams = ["name", "description"];
-
-  // if there is smth else...
-  const isBodyValid = receivedKeys.every(function (key) {
-    return allowedParams.includes(key);
-  });
-
-  // ...BAD REQUEST
-  if (!isBodyValid)
-    return res.status(400).json({ message: "Invalid parameters in body" });
-
-  const { name, description } = req.body;
-
-  // if name is missing
-  if (name === undefined || name === null)
-    return res.status(400).json({ message: "Parameter 'name' is missing" });
-
-  if (typeof name !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'name' must be a string." });
-
-  // optional parameter
-  if (description !== undefined && typeof description !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'description' must be a string." });*/
-
   try {
     const { name, description } = req.body;
-    
+
     const newCategory = Category({ name, description });
 
     const result = await newCategory.save();
@@ -92,49 +55,10 @@ export async function createCategory(req, res, next) {
 
 // full updating 1 particular category
 export const fullUpdateCategoryById = async (req, res) => {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // we are expecting not more than 2 parameters
-  if (receivedKeys.length > 2)
-    return res
-      .status(400)
-      .json({ message: "Too many parameters. Not more than 2 are expected." });
-
-  // parameters are strictly defined
-  const allowedParams = ["name", "description"];
-
-  // if there is smth else...
-  const isBodyValid = receivedKeys.every(function (key) {
-    return allowedParams.includes(key);
-  });
-
-  // ...BAD REQUEST
-  if (!isBodyValid)
-    return res.status(400).json({ message: "Invalid parameters in body" });
-
-  const params = req.body;
-
-  // if name is missing
-  if (params.name === undefined || params.name === null)
-    return res.status(400).json({ message: "Parameter 'name' is missing" });
-
-  if (typeof params.name !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'name' must be a string." });
-
-  // optional parameter
-  if (
-    params.description !== undefined &&
-    typeof params.description !== "string"
-  )
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'description' must be a string." });
-
-  const { id } = req.params;
-
   try {
+    const { id } = req.params;
+    const params = req.body;
+
     const updatedCategory = await Category.findByIdAndUpdate(id, params, {
       new: true,
       runValidators: true,
@@ -170,29 +94,11 @@ export const fullUpdateCategoryById = async (req, res) => {
 export const partialUpdateCategoryById = async (req, res) => {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
-  // we are expecting not more than 2 parameters
-  if (receivedKeys.length > 2)
-    return res
-      .status(400)
-      .json({ message: "Too many parameters. Not more than 2 are expected." });
-
-  // parameters are strictly defined
-  const allowedParams = ["name", "description"];
-
-  // if there is smth else...
-  const isBodyValid = receivedKeys.every(function (key) {
-    return allowedParams.includes(key);
-  });
-
-  // ...BAD REQUEST
-  if (!isBodyValid)
-    return res.status(400).json({ message: "Invalid parameters in body" });
-
-  const params = req.body;
-
-  const { id } = req.params;
-
   try {
+    const params = req.body;
+
+    const { id } = req.params;
+
     const category = await Category.findById(id);
 
     if (!category)
@@ -200,40 +106,29 @@ export const partialUpdateCategoryById = async (req, res) => {
 
     let changesControl = [];
 
-    // if name exists => check the type
+    // if name exists => check for changes
     if (params.name !== undefined) {
-      if (typeof params.name !== "string")
-        return res
-          .status(400)
-          .json({ message: "Body parameter 'name' must be a string." });
-
       if (category.name !== params.name) {
         await category.updateName(params.name);
-        changesControl.push("Category name updated. ");
+
+        changesControl.push("Category name updated.");
       } else
-        changesControl.push(
-          "Category name didn't change. Same value entered. "
-        );
+        changesControl.push("Category name didn't change. Same value entered.");
     }
 
-    // if description exists => check the type
+    // if description exists => check for changes
     if (params.description !== undefined) {
-      if (typeof params.description !== "string")
-        return res
-          .status(400)
-          .json({ message: "Body parameter 'description' must be a string." });
-
       if (category.description !== params.description) {
         await category.updateDescription(params.description);
-        
-        changesControl.push("Category description updated. ");
+
+        changesControl.push("Category description updated.");
       } else
         changesControl.push(
-          "Category description didn't change. Same value entered. "
+          "Category description didn't change. Same value entered."
         );
     }
 
-    res.status(200).json({ messages: changesControl, category });
+    res.status(200).json({ message: changesControl, category });
   } catch (error) {
     // error code for duplicated data
     if (error.code === 11000)
