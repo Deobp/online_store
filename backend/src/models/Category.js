@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { CATEGORY_DESCRIPTION_REGEX, CATEGORY_NAME_REGEX } from "../utils/regEx.js";
 
 const categorySchema = new mongoose.Schema(
   {
@@ -7,19 +8,23 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      validate: {
-        validator: function (value) {
-          //letters, numbers, spaces, hyphens, and underscores =>
-          return /^[a-zA-Z0-9-_ ]+$/.test(value);
-        },
-        message:
-          "Category name can only contain letters, numbers, spaces, hyphens, and underscores.",
-      },
+      match: [
+        CATEGORY_NAME_REGEX,
+        "Name can only contain English letters, numbers, spaces, hyphens and underscores",
+      ],
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [50, "Name cannot exceed 50 characters"],
     },
 
     description: {
       type: String,
       trim: true,
+      match: [
+        CATEGORY_DESCRIPTION_REGEX,
+        "Description can only contain English letters and basic punctuation",
+      ],
+      minlength: [10, "Description must be at least 10 characters"],
+      maxlength: [500, "Description cannot exceed 500 characters"],
       default: "No description.",
     },
   },

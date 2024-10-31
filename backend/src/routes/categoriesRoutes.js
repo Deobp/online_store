@@ -11,7 +11,7 @@ import {
 } from "../controllers/categoriesController.js";
 
 import { authenticateToken, isAdmin } from "../middlewares/auth.js";
-import { bodyCheck, noBodyCheck } from "../middlewares/preControllerValidation.js";
+import { bodyCheck, noBodyCheck, paramsCheck } from "../middlewares/preControllerValidation.js";
 
 const router = express.Router();
 
@@ -22,11 +22,11 @@ router
 
 router
   .route("/:id")
-  .get(noBodyCheck, getCategoryById)  // get info about one category
-  .put(bodyCheck, authenticateToken, isAdmin, fullUpdateCategoryById) // full update of category (only admin)
-  .patch(bodyCheck, authenticateToken, isAdmin, partialUpdateCategoryById)  // partial update of 1 category (only admin)
-  .delete(noBodyCheck, authenticateToken, isAdmin, deleteCategory); // deleting category (only admin)
+  .get(noBodyCheck, paramsCheck, getCategoryById)  // get info about one category
+  .put(paramsCheck, bodyCheck, authenticateToken, isAdmin, fullUpdateCategoryById) // full update of category (only admin)
+  .patch(paramsCheck, bodyCheck, authenticateToken, isAdmin, partialUpdateCategoryById)  // partial update of 1 category (only admin)
+  .delete(noBodyCheck, paramsCheck, authenticateToken, isAdmin, deleteCategory); // deleting category (only admin)
 
-router.get("/:id/products", noBodyCheck, getProductsByCategoryId);  // get products that belongs to 1 category
+router.get("/:id/products", noBodyCheck, paramsCheck, getProductsByCategoryId);  // get products that belongs to 1 category
 
 export default router;

@@ -1,22 +1,33 @@
+import mongoose from "mongoose";
+import { UserError } from "../utils/errors.js";
+
+// check if route parameter ':id' is a correct for mongoose
+export async function paramsCheck(req, res, next) {
+  const { id } = req.params
+
+  if (!mongoose.isValidObjectId(id))
+    return next(new UserError("Invalid route parameter ':id'."));
+
+  next();
+}
+
 // in our REST API we are not allowing GET-requests to have body parameters
 export async function noBodyCheck(req, res, next) {
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
   // body is restricted
   if (receivedKeys.length > 0)
-    return res
-      .status(400)
-      .json({ message: "Body is restricted for this request." });
+    return next(new UserError("Body is restricted for this request."));
 
   next();
 }
 
-export async function bodyCheck(req, res, next) {
+export async function bodyCheck(req, res, next) {  
   const receivedKeys = Object.keys(req.body); // collecting keys to count
 
   // ignoring empty body
   if (receivedKeys.length === 0)
-    return res.status(400).json({ message: "No parameters in body." });
+    return next(new UserError("No parameters in body."));
 
   // identifying endpoints to validate bodies before they will reach our controllers
   const rootEndpoint = req.baseUrl;
@@ -25,9 +36,9 @@ export async function bodyCheck(req, res, next) {
     case "/api/categories":
       // we are expecting not more than 2 parameters ("name", "description" (optional))
       if (receivedKeys.length > 2)
-        return res.status(400).json({
-          message: "Too many parameters. Not more than 2 are expected.",
-        });
+        return next(
+          new UserError("Too many parameters. Not more than 2 are expected.")
+        );
 
       // parameters are strictly defined
       const allowedParams = ["name", "description"];
@@ -39,24 +50,20 @@ export async function bodyCheck(req, res, next) {
 
       // ...BAD REQUEST
       if (!isBodyValid)
-        return res.status(400).json({ message: "Invalid parameters in body" });
+        return next(new UserError("Invalid parameters in body."));
 
       const { name, description } = req.body;
 
       // if name is missing
       if (name === undefined && req.method !== "PATCH")
-        return res.status(400).json({ message: "Body parameter 'name' is missing" });
+        return next(new UserError("Body parameter 'name' is missing."));
 
       if (name !== undefined && typeof name !== "string")
-        return res
-          .status(400)
-          .json({ message: "Body parameter 'name' must be a string." });
+        return next(new UserError("Body parameter 'name' must be a string."));
 
       // optional parameter
       if (description !== undefined && typeof description !== "string")
-        return res
-          .status(400)
-          .json({ message: "Body parameter 'description' must be a string." });
+        return next(new UserError("Body parameter 'description' must be a string."));
 
       break;
   }

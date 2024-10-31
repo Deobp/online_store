@@ -9,7 +9,7 @@ import categoriesRoutes from "./routes/categoriesRoutes.js";
 import ordersRoutes from "./routes/ordersRoutes.js";
 import userRoute from "./routes/userRoute.js";
 import productRoute from "./routes/productRoute.js";
-import { jsonParsingErrorHandler } from "./middlewares/syntaxJsonErrorHandlers.js";
+import { errorHandler } from "./middlewares/errorHandlers.js";
 
 const app = express();
 
@@ -32,7 +32,7 @@ app.use(
 
       if (req.headers["content-type"]?.includes("application/json")) {
         // ensure that json is in headers
-        JSON.parse(buf);  // parsing error is handling by middleware jsonParsingErrorHandler
+        JSON.parse(buf);  // parsing error is handling by middleware
       }
     },
   })
@@ -45,8 +45,8 @@ app.use("/api/products", productRoute);
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/orders", ordersRoutes);
 
-// handling JSON parsing errors
-app.use(jsonParsingErrorHandler);
+// handling all the errors
+app.use(errorHandler);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on ${process.env.PORT}`);

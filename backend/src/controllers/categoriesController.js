@@ -1,15 +1,19 @@
 import Category from "../models/Category.js";
+import { UserError } from "../utils/errors.js";
 
 // Getting all categories
 export async function getAllCategories(req, res, next) {
   try {
     const categories = await Category.find();
+
     if (categories.length === 0)
-      return res.status(404).json({ message: "No categories found" });
+      return res
+        .status(200)
+        .json({ message: "List of categories is empty.", categories });
 
     res.status(200).json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 }
 
@@ -19,18 +23,11 @@ export async function getCategoryById(req, res, next) {
   try {
     const category = await Category.findById(id);
 
-    if (!category)
-      return res.status(404).json({ message: "Category not found" });
+    if (!category) return next(new UserError("Category not found.", 404));
 
     res.status(200).json(category);
   } catch (error) {
-    // invalid id
-    if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid categoryId", additionalInfo: error.message });
-
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 }
 
@@ -47,9 +44,17 @@ export async function createCategory(req, res, next) {
       .status(201)
       .json({ message: "The new category added successfully", result });
   } catch (error) {
-    if (error.name === "ValidationError" || error.code === 11000)
-      return res.status(400).json({ message: error.message });
-    res.status(500).json({ message: error.message });
+    // validation error from mongo
+    if (error.name === "ValidationError")
+      return next(new UserError(error.message));
+
+    // duplicate value error from mongo
+    if (error.code === 11000)
+      return next(
+        new UserError("Duplicate value. Body parameter 'name' must be unique.")
+      );
+
+    next(error);
   }
 }
 
@@ -63,37 +68,31 @@ export const fullUpdateCategoryById = async (req, res) => {
       new: true,
       runValidators: true,
     });
+
     if (!updatedCategory) {
-      return res.status(404).json({ message: "Category not found" });
+      return next(new UserError("Category not found.", 404));
     }
+
     res
       .status(200)
       .json({ message: "Category successfully updated", updatedCategory });
   } catch (error) {
-    // error code for duplicated data
+    // error code for duplicated data (mongo)
     if (error.code === 11000)
-      return res.status(400).json({
-        message: "Category name must be unique.",
-        additionalInfo: error.message,
-      });
+      return next(
+        new UserError("Duplicate value. Body parameter 'name' must be unique.")
+      );
 
+    // validation error from mongo
     if (error.name === "ValidationError")
-      return res.status(400).json({ message: error.message });
+      return next(new UserError(error.message));
 
-    // invalid id
-    if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid categoryId", additionalInfo: error.message });
-
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // partial updating 1 particular category
 export const partialUpdateCategoryById = async (req, res) => {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
   try {
     const params = req.body;
 
@@ -101,14 +100,13 @@ export const partialUpdateCategoryById = async (req, res) => {
 
     const category = await Category.findById(id);
 
-    if (!category)
-      return res.status(404).json({ message: "Category not found" });
+    if (!category) return next(new UserError("Category not found.", 404));
 
     let changesControl = [];
 
     // if name exists => check for changes
     if (params.name !== undefined) {
-      if (category.name !== params.name) {
+      if (category.name.trim() !== params.name.trim()) {
         await category.updateName(params.name);
 
         changesControl.push("Category name updated.");
@@ -118,7 +116,7 @@ export const partialUpdateCategoryById = async (req, res) => {
 
     // if description exists => check for changes
     if (params.description !== undefined) {
-      if (category.description !== params.description) {
+      if (category.description.trim() !== params.description.trim()) {
         await category.updateDescription(params.description);
 
         changesControl.push("Category description updated.");
@@ -130,23 +128,17 @@ export const partialUpdateCategoryById = async (req, res) => {
 
     res.status(200).json({ message: changesControl, category });
   } catch (error) {
-    // error code for duplicated data
+    // error code for duplicated data (mongo)
     if (error.code === 11000)
-      return res.status(400).json({
-        message: "Category name must be unique.",
-        additionalInfo: error.message,
-      });
+      return next(
+        new UserError("Duplicate value. Body parameter 'name' must be unique.")
+      );
 
+    // validation error from mongo
     if (error.name === "ValidationError")
-      return res.status(400).json({ message: error.message });
+      return next(new UserError(error.message));
 
-    // invalid id
-    if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid categoryId", additionalInfo: error.message });
-
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
@@ -163,13 +155,11 @@ export async function deleteCategory(req, res, next) {
 
     res.status(204).send();
   } catch (error) {
-    // invalid id
+    // invalid id - mongo error
     if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid categoryId", additionalInfo: error.message });
+      return next(new UserError("Invalid route parameter ':id'."));
 
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 }
 
@@ -182,12 +172,10 @@ export async function getProductsByCategoryId(req, res) {
 
     res.json(category);
   } catch (error) {
-    // invalid id
+    // invalid id - mongo error
     if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid categoryId", additionalInfo: error.message });
+      return next(new UserError("Invalid route parameter ':id'."));
 
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 }
