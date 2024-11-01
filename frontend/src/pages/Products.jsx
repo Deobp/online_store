@@ -1,14 +1,17 @@
 import { useEffect, useState, useContext } from 'react';
-import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import './Products.css';
 
 const Products = () => {
-    const { token, userId } = useContext(AuthContext); // Access the token and userId from context
+    const { isAuthenticated } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [addToCartStatus, setAddToCartStatus] = useState('');
 
     useEffect(() => {
         fetchCategories();
@@ -49,17 +52,20 @@ const Products = () => {
         setSelectedCategory(categoryId);
     };
 
-    // Function to add product to cart
     const handleAddToCart = async (product) => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+
         try {
             const response = await fetch(`http://localhost:3000/api/users/me/cart`, {
                 method: 'POST',
-                 credentials: 'include',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json'//,
-                    //'Authorization': `Bearer ${token}` // Include token for authentication
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ productId: product._id, quantity: 1 }) // Send product ID to backend
+                body: JSON.stringify({ productId: product._id, quantity: 1 })
             });
 
             if (!response.ok) {
@@ -68,9 +74,19 @@ const Products = () => {
 
             const result = await response.json();
             console.log(`Added ${product.name} to cart:`, result);
+            
+            setAddToCartStatus(`${product.name} added to cart successfully!`);
+            setTimeout(() => setAddToCartStatus(''), 3000);
         } catch (error) {
-            console.error(error);
+            console.error('Error adding to cart:', error);
+            setAddToCartStatus(`Error: ${error.message}`);
+            setTimeout(() => setAddToCartStatus(''), 3000);
         }
+    };
+
+
+    const handleViewCart = () => {
+        navigate('/cart');
     };
 
     const filteredProducts = selectedCategory
@@ -87,6 +103,22 @@ const Products = () => {
 
     return (
         <div className="products-page">
+            {addToCartStatus && (
+                <div className="add-to-cart-status">
+                    {addToCartStatus}
+                </div>
+            )}
+            <div className="products-header">
+                <h1>Products</h1>
+                {isAuthenticated && (
+                    <button 
+                        className="view-cart-button"
+                        onClick={handleViewCart}
+                    >
+                        View Cart
+                    </button>
+                )}
+            </div>
             <div className="categories-container">
                 <h2>Categories</h2>
                 <ul className="categories-list">
@@ -108,7 +140,6 @@ const Products = () => {
                 </ul>
             </div>
             <div className="products-container">
-                <h1>Products</h1>
                 <div className="products-grid">
                     {filteredProducts.length > 0 ? (
                         filteredProducts.map((product) => (

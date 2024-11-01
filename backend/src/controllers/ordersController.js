@@ -45,148 +45,112 @@ export async function getOrderById(req, res, next) {
 // creating new order
 export async function createOrder(req, res, next) {
   try {
-    const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-    // body is not allowed
-    if (receivedKeys.length !== 0)
+    if (Object.keys(req.body).length !== 0) {
       return res.status(400).json({ message: "Body is not allowed." });
+    }
 
-    let userId = req.params.id;
+    let userId = req.params.id === "me" ? req.user.id : req.params.id;
 
-    if (userId === "me") userId = req.user.id;
-
-    if (req.user.id !== userId) {
-      if (req.user.role !== "admin")
-        return res.status(403).json({
-          message: "Access denied, you are not admin or this is not your data.",
-        });
+    if (req.user.id !== userId && req.user.role !== "admin") {
+      return res.status(403).json({
+        message: "Access denied, you are not admin or this is not your data.",
+      });
     }
 
     const user = await User.findById(userId).populate("cart.productId");
 
-    if (!user) return res.status(400).json({ message: "User not found." });
-
-    if (user.cart.length === 0)
-      return res.status(400).json({ message: "User's cart is empty." });
-
-    const products = [];
-    let totalPrice = 0;
-    for (const item of user.cart) {
-      products.push({
-        productId: item.productId._id,
-        priceAtPurchase: item.productId.price,
-        quantity: item.quantity,
-      });
-
-      totalPrice += item.productId.price * item.quantity;
+    if (!user) {
+      return res.status(400).json({ message: "User not found." });
     }
 
-    const newOrder = Order({ userId, products, totalPrice });
-    await newOrder.save();
+    if (user.cart.length === 0) {
+      return res.status(400).json({ message: "User's cart is empty." });
+    }
+
+    const products = user.cart.map((item) => ({
+      productId: item.productId._id,
+      priceAtPurchase: item.productId.price,
+      quantity: item.quantity,
+    }));
+
+    const totalPrice = products.reduce(
+      (sum, item) => sum + item.priceAtPurchase * item.quantity,
+      0
+    );
+
+    const newOrder = await Order.create({ userId, products, totalPrice });
+
     await user.clearCart();
 
-    // stealing products from stock
-    for (const item of newOrder.products) {
-      const product = await Product.findById(item.productId);
-      if (!product)
-        return res.status(404).json({ message: "Product not found" });
-      await product.decreaseQuantity(item.quantity);
+    const bulkUpdates = products.map((item) => ({
+      updateOne: {
+        filter: { _id: item.productId },
+        update: { $inc: { quantity: -item.quantity } },
+      },
+    }));
+
+    const bulkResult = await Product.bulkWrite(bulkUpdates);
+
+    if (bulkResult.matchedCount < products.length) {
+      return res.status(404).json({ message: "Product not found." });
     }
 
-    res
-      .status(201)
-      .json({ message: "New order successfully created.", newOrder });
+    res.status(201).json({ message: "New order successfully created.", newOrder });
   } catch (error) {
-    // invalid id
-    if (error.name === "CastError")
+    if (error.name === "CastError") {
       return res
         .status(400)
         .json({ message: "Invalid userId", additionalInfo: error.message });
-
+    }
     res.status(500).json({ message: error.message });
   }
 }
 
+
 // updating order's status
-export async function updateStatus(req, res, next) {
+export async function updateStatus(req, res) {
   try {
-    const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-    // ignoring empty body
-    if (receivedKeys.length === 0)
-      return res.status(400).json({ message: "No parameters in body." });
-
-    // we are expecting not more than 1 parameters
-    if (receivedKeys.length > 1)
-      return res.status(400).json({
-        message: "Too many parameters. Only 'status' is expected.",
-      });
-
     const { id } = req.params;
     const { status } = req.body;
 
-    // if status is missing
-    if (status === undefined || status === null)
-      return res.status(400).json({ message: "Status is missing" });
-
-    // if it is not a string
+    // validate the input
+    if (!status) return res.status(400).json({ message: "Status is missing." });
     if (typeof status !== "string")
-      return res
-        .status(400)
-        .json({ message: "Body parameter 'status' must be a string." });
+      return res.status(400).json({ message: "Status must be a string." });
 
     const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ message: "Order not found." });
 
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    const validStatusTransitions = {
+      pending: ["shipping", "cancelled"],
+      shipping: ["completed"],
+    };
 
-    switch (order.status) {
-      case "pending":
-        if (status === "shipping") {
-          await order.updateStatus(status);
-          await order.save();
-          return res
-            .status(200)
-            .json({ message: "Status updated to 'shipping'", order });
-        } else if (status === "cancelled") {
-          for (const item of order.products) {
-            const product = await Product.findById(item.productId);
-            if (!product)
-              return res.status(404).json({ message: "Product not found" });
-            await product.increaseQuantity(item.quantity);
-          }
-          await order.updateStatus(status);
-          await order.save();
-          return res
-            .status(200)
-            .json({ message: "Status updated to 'cancelled'", order });
-        } else {
-          return res.status(400).json({ message: "Incorrect status" });
-        }
-
-      case "shipping":
-        if (status === "completed") {
-          await order.updateStatus(status);
-          await order.save();
-          return res
-            .status(200)
-            .json({ message: "Status updated to 'completed'", order });
-        } else {
-          return res.status(400).json({ message: "Incorrect status" });
-        }
-
-      default:
-        return res.status(400).json({ message: "Incorrect status" });
+    if (!validStatusTransitions[order.status]?.includes(status)) {
+      return res.status(400).json({ message: "Invalid status transition." });
     }
-  } catch (error) {
-    // invalid id
-    if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid id", additionalInfo: error.message });
 
-    res.status(500).json({ message: error.message });
+    if (status === "cancelled" && order.status === "pending") {
+      for (const item of order.products) {
+        const product = await Product.findById(item.productId);
+        if (product) await product.increaseQuantity(item.quantity);
+      }
+    }
+
+    // Update order status
+    await order.updateStatus(status);
+    await order.save();
+
+    res.status(200).json({ message: `Status updated to '${status}'`, order });
+  } catch (error) {
+    const isInvalidId = error.name === "CastError";
+    res.status(isInvalidId ? 400 : 500).json({
+      message: isInvalidId ? "Invalid id." : error.message,
+      additionalInfo: isInvalidId ? error.message : undefined,
+    });
   }
 }
+
 
 // deleting order
 export async function deleteOrder(req, res, next) {
@@ -208,4 +172,22 @@ export async function deleteOrder(req, res, next) {
 
     res.status(500).json({ message: error.message });
   }
+}
+
+// Add this function to your existing controller
+export async function getUserOrders(req, res) {
+    try {
+        const userId = req.user.id;
+        const orders = await Order.find({ userId })
+            .populate('products.productId')
+            .sort({ createdAt: -1 });
+
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({ message: "No orders found" });
+        }
+
+        res.status(200).json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 }
