@@ -91,7 +91,7 @@ export const partialUpdateUserById = async (req, res, next) => {
 
     if (req.user.id !== id) {
       if (req.user.role !== "admin")
-        return next(new UserError("Access denied.", 401));
+        return next(new UserError("Access denied.", 403));
     }
 
     const user = await User.findById(id);
@@ -218,143 +218,66 @@ export const partialUpdateUserById = async (req, res, next) => {
 };
 
 // deleting user
-export const deleteUser = async (req, res) => {
+export const deleteUser = async (req, res, next) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
-    if (!deletedUser)
-      return res.status(404).json({ message: "User not found" });
-    res
-      .status(200)
-      .json({ message: "User deleted successfully", deletedUser: deletedUser });
-  } catch (error) {
-    // invalid id
-    if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid userId", additionalInfo: error.message });
 
-    res.status(500).json({ message: error.message });
+    if (!deletedUser) return next(new UserError("User not found.", 404));
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
   }
 };
 
 // adding to cart
-export const addToCart = async (req, res) => {
-  const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-  // ignoring empty body
-  if (receivedKeys.length === 0)
-    return res.status(400).json({ message: "No parameters in body." });
-
-  // we are expecting not more than 2 parameters
-  if (receivedKeys.length > 2)
-    return res.status(400).json({
-      message: "Too many parameters. Not more than 6 are expected.",
-    });
-
-  // we are expecting not less than 2 parameters
-  if (receivedKeys.length < 2)
-    return res
-      .status(400)
-      .json({ message: "Not enough parameters. Should be 2." });
-
-  // parameters are strictly defined
-  const allowedParams = ["productId", "quantity"];
-
-  // if there is smth else...
-  const isBodyValid = receivedKeys.every(function (key) {
-    return allowedParams.includes(key);
-  });
-
-  // ...BAD REQUEST
-  if (!isBodyValid)
-    return res.status(400).json({ message: "Invalid parameters in body" });
-
-  let { id } = req.params;
-
-  if (id === "me") id = req.user.id;
+export const addToCart = async (req, res, next) => {
+  const { id } = req.params;
 
   if (req.user.id !== id) {
     if (req.user.role !== "admin")
-      return res.status(403).json({
-        message: "Access denied, you are not admin or this is not your data.",
-      });
+      return next(new UserError("Access denied.", 403));
   }
 
   const { productId, quantity } = req.body;
-
-  // if productId is missing
-  if (productId === undefined || productId === null)
-    return res
-      .status(400)
-      .json({ message: "Parameter 'productId' is missing" });
-
-  // if quantity is missing
-  if (quantity === undefined || quantity === null)
-    return res.status(400).json({ message: "Parameter 'quantity' is missing" });
-
-  if (typeof productId !== "string")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'productId' must be a string." });
-
-  if (typeof quantity !== "number")
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'quantity' must be a number." });
-
-  if (quantity < 1)
-    return res
-      .status(400)
-      .json({ message: "Body parameter 'quantity' must be >= 1." });
-
   try {
     const product = await Product.findById(productId);
 
     if (!product)
-      return res
-        .status(404)
-        .json({ message: "Product with this id not found" });
+      return next(new UserError("Product with this id not found.", 404));
 
-    if (product.isEnded)
-      return res.status(400).json({ message: "Out of stock." });
+    if (product.isEnded) return next(new UserError("Out of stock."));
 
-    if (parseInt(quantity) > product.quantity)
-      return res.status(400).json({ message: "Not enough products in stock." });
+    if (quantity > product.quantity)
+      return next(new UserError("Not enough products in stock."));
 
     const user = await User.findById(id);
 
-    if (!user)
-      return res.status(404).json({ message: "User with this ID not found" });
+    if (!user) return next(new UserError("User with this id not found.", 404));
 
     await user.addToCart(productId, quantity, product.quantity);
 
     res.status(200).json({ message: "Product added to cart", cart: user.cart });
   } catch (error) {
-    if (error.name === "CastError" || error.name === "StockError")
-      return res.status(400).json({ message: error.message });
-
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // clearing cart
-export async function clearCart(req, res) {
-  let { id } = req.params;
+export async function clearCart(req, res, next) {
+  const { id } = req.params;
 
-  if (id === "me") id = req.user.id;
+  //if (id === "me") id = req.user.id;
 
   if (req.user.id !== id) {
     if (req.user.role !== "admin")
-      return res.status(403).json({
-        message: "Access denied, you are not admin or this is not your data.",
-      });
+      return next(new UserError("Access denied.", 403));
   }
 
   try {
     const user = await User.findById(id);
 
-    if (!user)
-      return res.status(404).json({ message: "User with this ID not found" });
+    if (!user) return next(new UserError("User with this id not found.", 404));
 
     await user.clearCart();
 
@@ -362,39 +285,32 @@ export async function clearCart(req, res) {
       .status(200)
       .json({ message: "User's cart is cleared.", cart: user.cart });
   } catch (error) {
-    // invalid id
-    if (error.name === "CastError")
-      return res
-        .status(400)
-        .json({ message: "Invalid userId", additionalInfo: error.message });
-
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 }
 
-export async function viewCart(req, res) {
-  let { id } = req.params;
+// viewing cart of one user
+export async function viewCart(req, res, next) {
+  const { id } = req.params;
 
-  if (id === "me") id = req.user.id;
+  //if (id === "me") id = req.user.id;
 
   if (req.user.id !== id) {
     if (req.user.role !== "admin")
-      return res.status(403).json({
-        message: "Access denied, you are not admin or this is not your data.",
-      });
+      return next(new UserError("Access denied.", 403));
   }
+  try {
+    const user = await User.findById(id);
 
-  const user = await User.findById(id);
+    if (!user) return next(new UserError("User with this id not found.", 404));
 
-  if (!user)
-    return res.status(404).json({ message: "User with this ID not found" });
+    const result = await user.getCart();
 
-  const result = await user.getCart();
-
-  res.status(200).json({ cart: result });
+    res.status(200).json({ cart: result });
+  } catch (error) {
+    next(error);
+  }
 }
-
-
 
 export async function verifyUser(req, res, next) {
   const user = await User.findOne({ username: req.body.username });
@@ -508,6 +424,6 @@ export async function logout(req, res, next) {
 
     return res.status(200).json({ message: "Logout: success." });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    next(error);
   }
 }

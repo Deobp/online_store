@@ -5,26 +5,19 @@ import {
   fullUpdateUserById,
   deleteUser,
   addToCart,
-  updateUsername,
-  updatePassword,
-  updateFirstName,
-  updateLastName,
   verifyUser,
   registerUser,
-  updateEmail,
-  updatePhone,
-  updateCountry,
-  updateCity,
-  updateStreet,
-  updateHouse,
-  updateApartment,
   clearCart,
   viewCart,
   logout,
   partialUpdateUserById,
 } from "../controllers/userController.js";
 
-import { bodyCheck, noBodyCheck, paramsCheck } from "../middlewares/preControllerValidation.js";
+import {
+  bodyCheck,
+  noBodyCheck,
+  paramsCheck,
+} from "../middlewares/preControllerValidation.js";
 import { authenticateToken, isAdmin } from "../middlewares/auth.js";
 import { createOrder } from "../controllers/ordersController.js";
 
@@ -42,15 +35,21 @@ router
   .get(noBodyCheck, authenticateToken, paramsCheck, getUserById)
   .put(bodyCheck, authenticateToken, paramsCheck, fullUpdateUserById)
   .patch(bodyCheck, authenticateToken, paramsCheck, partialUpdateUserById)
-  .delete(authenticateToken, isAdmin, deleteUser);
+  .delete(noBodyCheck, paramsCheck, authenticateToken, isAdmin, deleteUser);
 
 router
   .route("/:id/cart")
-  .get(authenticateToken, viewCart)
-  .post(authenticateToken, addToCart);
+  .get(noBodyCheck, authenticateToken, paramsCheck, viewCart)
+  .post(bodyCheck, authenticateToken, paramsCheck, addToCart);
 
-router.post("/:id/cart/clear", authenticateToken, clearCart);
+router.post(
+  "/:id/cart/clear",
+  noBodyCheck,
+  authenticateToken,
+  paramsCheck,
+  clearCart
+);
 
-router.post("/:id/orders", authenticateToken, createOrder)
+router.post("/:id/orders", authenticateToken, createOrder);
 
 export default router;

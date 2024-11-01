@@ -18,6 +18,6 @@ export async function errorHandler(err, req, res, next) {
 
   // all not handled, probably are server errors
   res.status(500).json({
-    message: "Internal Server Error",
+    message: "Internal Server Error", details: err.message
   });
 }

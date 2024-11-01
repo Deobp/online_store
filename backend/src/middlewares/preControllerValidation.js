@@ -31,10 +31,15 @@ export async function bodyCheck(req, res, next) {
   if (receivedKeys.length === 0)
     return next(new UserError("No parameters in body."));
 
+  let endpoint = "";
   // identifying endpoints to validate bodies before they will reach our controllers
-  const rootEndpoint = req.baseUrl;
+  if (req.path.endsWith("/cart")) {
+    endpoint = "/cart";
+  } else {
+    endpoint = req.baseUrl;
+  }
 
-  switch (rootEndpoint) {
+  switch (endpoint) {
     case "/api/categories": {
       // we are expecting not more than 2 parameters ("name", "description" (optional))
       if (receivedKeys.length > 2)
@@ -243,6 +248,51 @@ export async function bodyCheck(req, res, next) {
       }
 
       break;
+    }
+
+    case "/cart": {
+      // we are expecting not more than 2 parameters
+      if (receivedKeys.length !== 2)
+        return next(new UserError("Only 2 body parameters are allowed."));
+
+      // parameters are strictly defined
+      const allowedParams = ["productId", "quantity"];
+
+      // if there is smth else...
+      const isBodyValid = receivedKeys.every(function (key) {
+        return allowedParams.includes(key);
+      });
+
+      // ...BAD REQUEST
+      if (!isBodyValid)
+        return next(new UserError("Invalid parameters in body."));
+
+      const { productId, quantity } = req.body;
+
+      // if productId is missing
+      if (productId === undefined)
+        return new UserError("Body parameter 'productId' is missing.");
+
+      // if quantity is missing
+      if (quantity === undefined)
+        return new UserError("Body parameter 'quantity' is missing.");
+
+      if (typeof productId !== "string")
+        return new UserError("Body parameter 'productId' must be a string.");
+
+      if (!mongoose.isValidObjectId(productId))
+        return next(new UserError("Invalid body parameter 'productId'."));
+
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        return next(
+          new UserError(
+            "Body parameter 'quantity' must be a positive Integer >=1."
+          )
+        );
+      }
+
+
+
     }
   }
 
