@@ -59,7 +59,7 @@ export async function createCategory(req, res, next) {
 }
 
 // full updating 1 particular category
-export const fullUpdateCategoryById = async (req, res) => {
+export const fullUpdateCategoryById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const params = req.body;
@@ -92,7 +92,7 @@ export const fullUpdateCategoryById = async (req, res) => {
 };
 
 // partial updating 1 particular category
-export const partialUpdateCategoryById = async (req, res) => {
+export const partialUpdateCategoryById = async (req, res, next) => {
   try {
     const params = req.body;
 
@@ -164,7 +164,7 @@ export async function deleteCategory(req, res, next) {
 }
 
 // Getting list of products from 1 category
-export async function getProductsByCategoryId(req, res) {
+export async function getProductsByCategoryId(req, res, next) {
   try {
     const category = await Category.findById(req.params.id).populate(
       "products"

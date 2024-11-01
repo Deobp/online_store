@@ -16,7 +16,7 @@ export async function errorHandler(err, req, res, next) {
     });
   }
 
-  // all that are not handled, probably are server errors
+  // all not handled, probably are server errors
   res.status(500).json({
     message: "Internal Server Error",
   });

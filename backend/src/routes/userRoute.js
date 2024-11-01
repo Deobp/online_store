@@ -2,7 +2,7 @@ import express from "express";
 import {
   getUsers,
   getUserById,
-  updateUser,
+  fullUpdateUserById,
   deleteUser,
   addToCart,
   updateUsername,
@@ -21,8 +21,10 @@ import {
   clearCart,
   viewCart,
   logout,
+  partialUpdateUserById,
 } from "../controllers/userController.js";
 
+import { bodyCheck, noBodyCheck, paramsCheck } from "../middlewares/preControllerValidation.js";
 import { authenticateToken, isAdmin } from "../middlewares/auth.js";
 import { createOrder } from "../controllers/ordersController.js";
 
@@ -33,12 +35,13 @@ router.post("/login", verifyUser);
 router.post("/logout", logout);
 
 // get all users
-router.get("/", authenticateToken, isAdmin, getUsers);
+router.get("/", noBodyCheck, authenticateToken, isAdmin, getUsers);
 
 router
   .route("/:id")
-  .get(authenticateToken, getUserById)
-  .put(authenticateToken, updateUser)
+  .get(noBodyCheck, authenticateToken, paramsCheck, getUserById)
+  .put(bodyCheck, authenticateToken, paramsCheck, fullUpdateUserById)
+  .patch(bodyCheck, authenticateToken, paramsCheck, partialUpdateUserById)
   .delete(authenticateToken, isAdmin, deleteUser);
 
 router
@@ -49,27 +52,5 @@ router
 router.post("/:id/cart/clear", authenticateToken, clearCart);
 
 router.post("/:id/orders", authenticateToken, createOrder)
-
-router.patch("/:id/username", authenticateToken, updateUsername);
-
-router.patch("/:id/password", authenticateToken, updatePassword);
-
-router.patch("/:id/first-name", authenticateToken, updateFirstName);
-
-router.patch("/:id/last-name", authenticateToken, updateLastName);
-
-router.patch("/:id/email", authenticateToken, updateEmail);
-
-router.patch("/:id/phone", authenticateToken, updatePhone);
-
-router.patch("/:id/country", authenticateToken, updateCountry);
-
-router.patch("/:id/city", authenticateToken, updateCity);
-
-router.patch("/:id/street", authenticateToken, updateStreet);
-
-router.patch("/:id/house", authenticateToken, updateHouse);
-
-router.patch("/:id/apartment", authenticateToken, updateApartment);
 
 export default router;
