@@ -3,9 +3,9 @@ import express from "express"
 import {
     getAllOrders,
     getOrderById,
-    createOrder,
     updateStatus,
-    deleteOrder
+    deleteOrder,
+    getUserOrders
 } from "../controllers/ordersController.js"
 
 import {
@@ -16,7 +16,7 @@ import {
 const router = express.Router()
 
 router.get("/", authenticateToken, isAdmin, getAllOrders)
-
+router.get("/me", authenticateToken, getUserOrders)
 router.route("/:id")
     .get(authenticateToken, getOrderById)
     .patch(authenticateToken, isAdmin, updateStatus)

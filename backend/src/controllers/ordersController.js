@@ -173,3 +173,21 @@ export async function deleteOrder(req, res, next) {
     res.status(500).json({ message: error.message });
   }
 }
+
+// Add this function to your existing controller
+export async function getUserOrders(req, res) {
+    try {
+        const userId = req.user.id;
+        const orders = await Order.find({ userId })
+            .populate('products.productId')
+            .sort({ createdAt: -1 });
+
+        if (!orders || orders.length === 0) {
+            return res.status(404).json({ message: "No orders found" });
+        }
+
+        res.status(200).json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
