@@ -312,22 +312,27 @@ export async function viewCart(req, res, next) {
   }
 }
 
+// login
 export async function verifyUser(req, res, next) {
-  const user = await User.findOne({ username: req.body.username });
-  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
-    return res.status(401).json({ message: "Invalid credentials." });
+  try {
+    const user = await User.findOne({ username: req.body.username });
+    if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+      return next(new UserError("Invalid credentials.", 401));
+    }
+
+    const token = jwt.createToken(user);
+    if (!token)
+      return res.status(500).json({ message: "Error generating token" });
+    //res.json({ token })
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 3600000, // 1h
+    });
+
+    res.status(200).json({ message: "User authorized" /*, token*/ });
+  } catch (error) {
+    next(error);
   }
-
-  const token = jwt.createToken(user);
-  if (!token)
-    return res.status(500).json({ message: "Error generating token" });
-  //res.json({ token })
-  res.cookie("token", token, {
-    httpOnly: true,
-    maxAge: 3600000, // 1h
-  });
-
-  res.status(200).json({ message: "User authorized" /*, token*/ });
 }
 
 export async function registerUser(req, res, next) {
@@ -345,42 +350,16 @@ export async function registerUser(req, res, next) {
     apartment,
   } = req.body;
 
-  if (!firstName)
-    return res.status(400).json({ message: "First name is missing." });
-
-  if (!lastName)
-    return res.status(400).json({ message: "Last name is missing." });
-
-  if (!username)
-    return res.status(400).json({ message: "Username is missing." });
-
-  if (!password)
-    return res.status(400).json({ message: "Password is missing." });
-
-  if (!email) return res.status(400).json({ message: "email is missing." });
-
-  if (!phone)
-    return res.status(400).json({ message: "Phone number is missing." });
-
-  if (!country) return res.status(400).json({ message: "Country is missing." });
-
-  if (!city) return res.status(400).json({ message: "City is missing." });
-
-  if (!street) return res.status(400).json({ message: "Street is missing." });
-
-  if (!house) return res.status(400).json({ message: "House is missing." });
-
-  let user = await User.findOne({ username });
-  if (user) return res.status(400).json({ message: "This username is busy." });
-
-  user = await User.findOne({ email });
-  if (user) return res.status(400).json({ message: "This email is busy." });
-
-  user = await User.findOne({ phone });
-  if (user)
-    return res.status(400).json({ message: "This phone number is busy." });
-
   try {
+    let user = await User.findOne({ username });
+    if (user) return next(new UserError("This username is busy."));
+
+    user = await User.findOne({ email });
+    if (user) return next(new UserError("This email is busy."));
+
+    user = await User.findOne({ phone });
+    if (user) return next(new UserError("This email is busy."));
+
     const newUser = new User({
       firstName,
       lastName,
@@ -409,12 +388,21 @@ export async function registerUser(req, res, next) {
       .status(201)
       .json({ message: "User registered successfully" /*, token */ });
   } catch (error) {
-    if (error.name === "ValidationError" || error.code === 11000)
-      return res.status(400).json({ message: error.message });
-    res.status(500).json({ message: error.message });
+    // validation error from mongo
+    if (error.name === "ValidationError")
+      return next(new UserError(error.message));
+
+    // duplicate value error from mongo
+    if (error.code === 11000)
+      return next(
+        new UserError("Duplicate value. Body parameters 'username', 'email', 'phone' must be unique.")
+      );
+
+    next(error);
   }
 }
 
+// logout
 export async function logout(req, res, next) {
   try {
     // clear cookie with token

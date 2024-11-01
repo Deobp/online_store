@@ -35,6 +35,8 @@ export async function bodyCheck(req, res, next) {
   // identifying endpoints to validate bodies before they will reach our controllers
   if (req.path.endsWith("/cart")) {
     endpoint = "/cart";
+  } else if (req.path.endsWith("/login")) {
+    endpoint = "/login";
   } else {
     endpoint = req.baseUrl;
   }
@@ -251,7 +253,7 @@ export async function bodyCheck(req, res, next) {
     }
 
     case "/cart": {
-      // we are expecting not more than 2 parameters
+      // we are expecting only 2 parameters
       if (receivedKeys.length !== 2)
         return next(new UserError("Only 2 body parameters are allowed."));
 
@@ -271,14 +273,16 @@ export async function bodyCheck(req, res, next) {
 
       // if productId is missing
       if (productId === undefined)
-        return new UserError("Body parameter 'productId' is missing.");
+        return next(new UserError("Body parameter 'productId' is missing."));
 
       // if quantity is missing
       if (quantity === undefined)
-        return new UserError("Body parameter 'quantity' is missing.");
+        return next(new UserError("Body parameter 'quantity' is missing."));
 
       if (typeof productId !== "string")
-        return new UserError("Body parameter 'productId' must be a string.");
+        return next(
+          new UserError("Body parameter 'productId' must be a string.")
+        );
 
       if (!mongoose.isValidObjectId(productId))
         return next(new UserError("Invalid body parameter 'productId'."));
@@ -290,9 +294,46 @@ export async function bodyCheck(req, res, next) {
           )
         );
       }
+      break;
+    }
+    case "/login": {
+      // we are expecting only 2 parameters
+      if (receivedKeys.length !== 2)
+        return next(new UserError("Only 2 body parameters are allowed."));
 
+      // parameters are strictly defined
+      const allowedParams = ["username", "password"];
 
+      // if there is smth else...
+      const isBodyValid = receivedKeys.every(function (key) {
+        return allowedParams.includes(key);
+      });
 
+      // ...BAD REQUEST
+      if (!isBodyValid)
+        return next(new UserError("Invalid parameters in body."));
+
+      const { username, password } = req.body;
+
+      // if username is missing
+      if (username === undefined)
+        return next(new UserError("Body parameter 'username' is missing."));
+
+      // if password is missing
+      if (password === undefined)
+        return next(new UserError("Body parameter 'password' is missing."));
+
+      if (typeof username !== "string")
+        return next(
+          new UserError("Body parameter 'username' must be a string.")
+        );
+
+      if (typeof password !== "string")
+        return next(
+          new UserError("Body parameter 'password' must be a string.")
+        );
+
+      break;
     }
   }
 

@@ -23,9 +23,9 @@ import { createOrder } from "../controllers/ordersController.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", verifyUser);
-router.post("/logout", logout);
+router.post("/register", bodyCheck, registerUser);
+router.post("/login", bodyCheck, verifyUser);
+router.post("/logout", noBodyCheck, logout);
 
 // get all users
 router.get("/", noBodyCheck, authenticateToken, isAdmin, getUsers);
