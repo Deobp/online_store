@@ -45,67 +45,67 @@ export async function getOrderById(req, res, next) {
 // creating new order
 export async function createOrder(req, res, next) {
   try {
-    const receivedKeys = Object.keys(req.body); // collecting keys to count
-
-    // body is not allowed
-    if (receivedKeys.length !== 0)
+    if (Object.keys(req.body).length !== 0) {
       return res.status(400).json({ message: "Body is not allowed." });
+    }
 
-    let userId = req.params.id;
+    let userId = req.params.id === "me" ? req.user.id : req.params.id;
 
-    if (userId === "me") userId = req.user.id;
-
-    if (req.user.id !== userId) {
-      if (req.user.role !== "admin")
-        return res.status(403).json({
-          message: "Access denied, you are not admin or this is not your data.",
-        });
+    if (req.user.id !== userId && req.user.role !== "admin") {
+      return res.status(403).json({
+        message: "Access denied, you are not admin or this is not your data.",
+      });
     }
 
     const user = await User.findById(userId).populate("cart.productId");
 
-    if (!user) return res.status(400).json({ message: "User not found." });
-
-    if (user.cart.length === 0)
-      return res.status(400).json({ message: "User's cart is empty." });
-
-    const products = [];
-    let totalPrice = 0;
-    for (const item of user.cart) {
-      products.push({
-        productId: item.productId._id,
-        priceAtPurchase: item.productId.price,
-        quantity: item.quantity,
-      });
-
-      totalPrice += item.productId.price * item.quantity;
+    if (!user) {
+      return res.status(400).json({ message: "User not found." });
     }
 
-    const newOrder = Order({ userId, products, totalPrice });
-    await newOrder.save();
+    if (user.cart.length === 0) {
+      return res.status(400).json({ message: "User's cart is empty." });
+    }
+
+    const products = user.cart.map((item) => ({
+      productId: item.productId._id,
+      priceAtPurchase: item.productId.price,
+      quantity: item.quantity,
+    }));
+
+    const totalPrice = products.reduce(
+      (sum, item) => sum + item.priceAtPurchase * item.quantity,
+      0
+    );
+
+    const newOrder = await Order.create({ userId, products, totalPrice });
+
     await user.clearCart();
 
-    // stealing products from stock
-    for (const item of newOrder.products) {
-      const product = await Product.findById(item.productId);
-      if (!product)
-        return res.status(404).json({ message: "Product not found" });
-      await product.decreaseQuantity(item.quantity);
+    const bulkUpdates = products.map((item) => ({
+      updateOne: {
+        filter: { _id: item.productId },
+        update: { $inc: { quantity: -item.quantity } },
+      },
+    }));
+
+    const bulkResult = await Product.bulkWrite(bulkUpdates);
+
+    if (bulkResult.matchedCount < products.length) {
+      return res.status(404).json({ message: "Product not found." });
     }
 
-    res
-      .status(201)
-      .json({ message: "New order successfully created.", newOrder });
+    res.status(201).json({ message: "New order successfully created.", newOrder });
   } catch (error) {
-    // invalid id
-    if (error.name === "CastError")
+    if (error.name === "CastError") {
       return res
         .status(400)
         .json({ message: "Invalid userId", additionalInfo: error.message });
-
+    }
     res.status(500).json({ message: error.message });
   }
 }
+
 
 // updating order's status
 export async function updateStatus(req, res) {
