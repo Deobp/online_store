@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-dotenv.config({ path: "./src/config/.env" });
 import { categories, users, products } from "./initData.js";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
