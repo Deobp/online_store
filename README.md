@@ -79,7 +79,51 @@ DB_CONNECT = mongodb://<username>:<password>@host:port/dbname
 PORT = 3000
 SALT_ROUNDS = 1
 JWT_SECRET = "your_secret_key"
+```
+Database Initialization
 
+To set up the initial database with default data, such as categories, users, and products, use the following command.
+
+Steps:
+
+Open a terminal.
+
+Navigate to the backend directory:
+
+```bash
+cd backend
+```
+
+Run the initialization script:
+```bash
+npm run init-db
+```
+
+This script will:
+
+Connect to the MongoDB database specified in your .env configuration.
+
+Clear any existing data in the User, Product, and Category collections.
+
+Populate the database with predefined categories, users, and products.
+
+Default Users
+
+The database will be initialized with two default users:
+
+Admin User
+Username: admin
+Password: Pa$$word123
+Role: admin
+
+Regular User
+Username: user1
+Password: Pa$$word123
+Role: user
+
+Note: Make sure to change the default passwords in production environments to ensure security.
+
+```bash
 # Start server
 node server.js
 ```
