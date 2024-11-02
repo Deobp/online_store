@@ -56,12 +56,19 @@ const Register = () => {
             return;
         }
         
+        const submissionData = {
+            ...formData,
+            house: houseNum
+        };
+
+        if (formData.apartment) {
+            submissionData.apartment = parseInt(formData.apartment);
+        } else {
+            delete submissionData.apartment;
+        }
+        
         try {
-            const response = await axios.post('http://localhost:3000/api/users/register', {
-                ...formData,
-                house: houseNum,  // Send as number instead of string
-                apartment: formData.apartment ? parseInt(formData.apartment) : null  // Handle apartment similarly
-            }, {
+            const response = await axios.post('http://localhost:3000/api/users/register', submissionData, {
                 withCredentials: true
             });
             setSuccess(response.data.message);
