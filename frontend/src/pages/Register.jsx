@@ -48,8 +48,20 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate house number before submission
+        const houseNum = parseInt(formData.house);
+        if (isNaN(houseNum) || houseNum < 1) {
+            setError('House number must be a positive integer greater than or equal to 1');
+            return;
+        }
+        
         try {
-            const response = await axios.post('http://localhost:3000/api/users/register', formData, {
+            const response = await axios.post('http://localhost:3000/api/users/register', {
+                ...formData,
+                house: houseNum,  // Send as number instead of string
+                apartment: formData.apartment ? parseInt(formData.apartment) : null  // Handle apartment similarly
+            }, {
                 withCredentials: true
             });
             setSuccess(response.data.message);
