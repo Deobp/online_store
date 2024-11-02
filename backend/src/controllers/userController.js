@@ -419,10 +419,17 @@ export async function logout(req, res, next) {
   }
 }
 
-// Getting list of orders from 1 user
+
 export async function getOrdersByUserId(req, res, next) {
   try {
-    const user = await User.findById(req.params.id).populate("orders");
+    const user = await User.findById(req.params.id)
+    .populate({
+      path: "orders",
+      populate: {
+        path: "products.productId",
+        select: "name imagePath",
+      }
+    });
 
     res.json(user.orders);
   } catch (error) {
