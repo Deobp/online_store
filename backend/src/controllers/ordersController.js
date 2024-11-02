@@ -24,9 +24,7 @@ export async function getOrderById(req, res, next) {
 
     if (order) {
       if (req.user.id !== order.userId || req.user.role !== "admin")
-        return res.status(401).json({
-          message: "Access denied, you are not admin or this is not your order",
-        });
+        return next(new UserError("Access denied.", 403));
     }
 
     if (!order) return next(new UserError("Order not found.", 404));
