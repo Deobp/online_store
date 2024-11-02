@@ -44,15 +44,38 @@
 
 .order-item {
     display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: 20px;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
 }
 
-.order-item img {
-    width: 80px;
-    height: 80px;
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-item-image {
+    flex: 0 0 100px;
+}
+
+.order-item-image img {
+    width: 100px;
+    height: 100px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 8px;
+}
+
+.order-item-details {
+    flex: 1;
+}
+
+.order-item-details h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.order-item-details p {
+    margin: 5px 0;
+    color: #666;
 }
 
 .admin-controls {
@@ -75,4 +98,35 @@
     color: red;
     text-align: center;
     padding: 20px;
+}
+
+.orders-loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.no-orders {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.order-card {
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.order-items {
+    margin: 1rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
 } 

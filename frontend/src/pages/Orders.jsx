@@ -21,17 +21,17 @@ const Orders = () => {
             const response = await fetch('http://localhost:3000/api/users/me/orders', {
                 credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Accept': 'application/json'
                 }
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch orders');
+                throw new Error(`Failed to fetch orders: ${response.statusText}`);
             }
 
             const data = await response.json();
-            setOrders(data);
+            console.log('Fetched orders:', data);
+            setOrders(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Error fetching orders:', err);
             setError(err.message);
@@ -40,23 +40,22 @@ const Orders = () => {
         }
     };
 
-    if (!isAuthenticated) {
-        return <div className="orders-error">Please log in to view your orders</div>;
-    }
-
-    if (loading) {
-        return <div className="orders-loading">Loading your orders...</div>;
-    }
-
-    if (error) {
-        return <div className="orders-error">{error}</div>;
-    }
+    const getImagePath = (imagePath) => {
+        if (!imagePath) return '/img/placeholder-image.png';
+        if (imagePath.startsWith('/img')) return imagePath;
+        const fileName = imagePath.split('/').pop();
+        return `/img/products/${fileName}`;
+    };
 
     return (
         <div className="orders-container">
             <h2>Your Orders</h2>
-            {orders.length === 0 ? (
-                <p>No orders found</p>
+            {loading ? (
+                <div className="orders-loading">Loading orders...</div>
+            ) : error ? (
+                <div className="orders-error">{error}</div>
+            ) : orders.length === 0 ? (
+                <div className="no-orders">No orders found</div>
             ) : (
                 <div className="orders-list">
                     {orders.map((order) => (
@@ -68,11 +67,26 @@ const Orders = () => {
                                 </span>
                             </div>
                             <div className="order-items">
-                                {order.products.map((item) => (
-                                    <div key={item.productId._id} className="order-item">
-                                        <h4>{item.productId.name}</h4>
-                                        <p>Quantity: {item.quantity}</p>
-                                        <p>Price: ${item.priceAtPurchase}</p>
+                                {order.products && order.products.map((item, index) => (
+                                    <div key={`${order._id}-${index}`} className="order-item">
+                                        {item.productId && (
+                                            <>
+                                                <div className="order-item-image">
+                                                    <img 
+                                                        src={getImagePath(item.productId.imagePath)}
+                                                        alt={item.productId.name || 'Product image'}
+                                                        onError={(e) => {
+                                                            e.target.src = '/placeholder-image.png';
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="order-item-details">
+                                                    <h4>{item.productId.name}</h4>
+                                                    <p>Quantity: {item.quantity}</p>
+                                                    <p>Price: ${item.priceAtPurchase}</p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 ))}
                             </div>

@@ -146,6 +146,31 @@ export async function deleteOrder(req, res, next) {
 
     res.status(204).send();
   } catch (error) {
-    next(error);
+    // invalid id
+    if (error.name === "CastError")
+      return res
+        .status(400)
+        .json({ message: "Invalid orderId", additionalInfo: error.message });
+
+    res.status(500).json({ message: error.message });
   }
+}
+
+// Add this function to your existing controller
+export async function getUserOrders(req, res) {
+    try {
+        const userId = req.user.id;
+        const orders = await Order.find({ userId })
+            .populate({
+                path: 'products.productId',
+                select: 'name price imagePath'
+            })
+            .sort({ createdAt: -1 });
+
+        // Always return an array, even if empty
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error('Error in getUserOrders:', error);
+        res.status(500).json({ message: error.message });
+    }
 }
