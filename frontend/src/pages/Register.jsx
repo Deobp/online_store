@@ -49,7 +49,6 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Validate house number before submission
         const houseNum = parseInt(formData.house);
         if (isNaN(houseNum) || houseNum < 1) {
             setError('House number must be a positive integer greater than or equal to 1');
