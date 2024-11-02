@@ -111,21 +111,21 @@ This script will:
 
 The database will be initialized with two default users:
 
-Admin User
+{Admin User
 
 Username: admin
 
 Password: Pa$$word123
 
-Role: admin
+Role: admin}
 
-Regular User
+{Regular User
 
 Username: user1
 
 Password: Pa$$word123
 
-Role: user
+Role: user}
 
 Note: Make sure to change the default passwords in production environments to ensure security.
 
