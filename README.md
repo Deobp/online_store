@@ -91,14 +91,179 @@ npm install
 npm run dev
 ```
 
+## Database Schema
+
+### User Schema
+```javascript
+{
+  firstName: {
+    type: String,
+    required: true,
+    match: [/^[A-Za-z\s'-]+$/, "Letters, spaces, hyphens, apostrophes only"],
+    minlength: 1,
+    maxlength: 50
+  },
+  lastName: {
+    type: String,
+    required: true,
+    match: [/^[A-Za-z\s'-]+$/, "Letters, spaces, hyphens, apostrophes only"],
+    minlength: 1,
+    maxlength: 50
+  },
+  username: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^[a-z][a-z0-9]*$/, "Start with lowercase, letters and numbers only"],
+    minlength: 4,
+    maxlength: 16
+  },
+  password: {
+    type: String,
+    required: true,
+    // Validated through bcrypt with complexity requirements
+  },
+  role: {
+    type: String,
+    required: true,
+    enum: ["user", "admin"],
+    default: "user"
+  },
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^\+[0-9]+$/, "International format with + prefix"],
+    minlength: 10,
+    maxlength: 15
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    minlength: 5,
+    maxlength: 254,
+    match: [/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, "Valid email format"]
+  },
+  country: String,
+  city: String,
+  street: String,
+  house: Number,
+  apartment: Number,
+  cart: [{
+    productId: ObjectId,
+    quantity: Number
+  }]
+}
+```
+
+### Product Schema
+```javascript
+{
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^[A-Za-z0-9][A-Za-z0-9\s&,.()/'(-]*[A-Za-z0-9).]$/],
+    minlength: 3,
+    maxlength: 100
+  },
+  description: {
+    type: String,
+    required: true,
+    match: [/^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/],
+    minlength: 10,
+    maxlength: 1000
+  },
+  imagePath: {
+    type: String,
+    required: true,
+    match: [/^(https?:\/\/[\w-]+\.[\w-]+\.|\/)?[\w/-]+\.(png|jpg|jpeg)$/i],
+    default: "/img/products/default.png"
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0.01
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0,
+    validate: Number.isInteger
+  },
+  categoryId: {
+    type: ObjectId,
+    ref: "Category",
+    required: true
+  },
+  isEnded: {
+    type: Boolean,
+    required: true,
+    default: false
+  }
+}
+```
+### Category Schema
+```javascript
+{
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/^[a-zA-Z0-9-_ ]+$/, "Letters, numbers, hyphens, underscores only"],
+    minlength: 2,
+    maxlength: 50,
+  },
+  description: {
+    type: String,
+    match: [/^[a-zA-Z0-9][a-zA-Z0-9\s,.!?()&$#@%*+\-"':]*[a-zA-Z0-9.]$/],
+    minlength: 10,
+    maxlength: 500,
+    default: "No description."
+  }
+}
+```
+
+### Order Schema
+```javascript
+{
+  userId: {
+    type: ObjectId,
+    ref: "User",
+    required: true
+  },
+  products: [{
+    productId: {
+      type: ObjectId,
+      ref: "Product",
+      required: true
+    },
+    priceAtPurchase: Number,
+    quantity: {
+      type: Number,
+      default: 1
+    }
+  }],
+  status: {
+    type: String,
+    enum: ["pending", "shipping", "completed", "cancelled"],
+    default: "pending"
+  },
+  totalPrice: Number,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
 ## Security Features
 
 ### Authentication Implementation
 - JWT tokens stored in HTTP-only cookies
-- Secure session management
-- Protection against XSS attacks
-- CSRF protection through cookies
-- Automatic token cleanup on logout
+- Token verification on protected routes
+- Role-based access control (Admin/User)
+- Password hashing using bcrypt
+- Error handling for invalid tokens
 
 ### Cookie Settings
 ```javascript
@@ -106,8 +271,29 @@ res.cookie("token", token, {
   httpOnly: true,    // Prevents JavaScript access
   maxAge: 3600000,   // 1 hour expiration
   // secure: true,   // Uncomment in production (HTTPS only)
-  // sameSite: 'strict'  // CSRF protection
 });
+```
+
+### Server Security
+```javascript
+// CORS configuration
+app.use(cors({
+  origin: true,
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Helmet security headers
+app.use(helmet());
+
+// JSON parser with validation
+app.use(express.json({
+  verify: (req, res, buf) => {
+    if (buf.length > 0 && req.headers["content-type"]?.includes("application/json")) {
+      JSON.parse(buf);
+    }
+  }
+}));
 ```
 
 ## API Documentation
@@ -133,7 +319,10 @@ Content-Type: application/json
   "apartment": 45
 }
 
-// Response: Sets HTTP-only cookie with JWT token
+Response: 
+- 201: User created
+- 400: Validation error
+- 409: Username/email/phone exists
 ```
 
 #### Login
@@ -146,14 +335,17 @@ Content-Type: application/json
   "password": "SecurePass123!"
 }
 
-// Response: Sets HTTP-only cookie with JWT token
+Response:
+- 200: Success + JWT cookie
+- 401: Invalid credentials
 ```
 
 #### Logout
 ```http
 POST /api/users/logout
 
-// Response: Clears the token cookie
+Response:
+- 200: Cookie cleared
 ```
 
 ### Product Management
@@ -171,13 +363,22 @@ Content-Type: application/json
   "categoryId": "category_id",
   "imagePath": "/images/product.jpg"
 }
+
+Response:
+- 201: Product created
+- 400: Validation error
+- 403: Not admin
 ```
 
 #### Get Products
 ```http
 GET /api/products        # All products
-GET /api/products/actual # In-stock products
+GET /api/products/actual # In-stock products (isEnded: false)
 GET /api/products/:id    # Specific product
+
+Response:
+- 200: Success
+- 404: Product not found (for /:id)
 ```
 
 ### Category Management
@@ -191,13 +392,22 @@ Content-Type: application/json
   "name": "Category Name",
   "description": "Category Description"
 }
+
+Response:
+- 201: Category created
+- 400: Validation error
+- 403: Not admin
 ```
 
 #### Get Categories
 ```http
-GET /api/categories
-GET /api/categories/:id
-GET /api/categories/:id/products
+GET /api/categories         # All categories
+GET /api/categories/:id     # Specific category
+GET /api/categories/:id/products  # Products in category
+
+Response:
+- 200: Success
+- 404: Category not found
 ```
 
 ### Order Management
@@ -205,9 +415,14 @@ GET /api/categories/:id/products
 #### Create Order
 ```http
 POST /api/users/:id/orders
+
+Response:
+- 201: Order created
+- 400: Empty cart
+- 404: User not found/Product not found
 ```
 
-#### Update Order Status (Admin)
+#### Update Order Status
 ```http
 PATCH /api/orders/:id
 Content-Type: application/json
@@ -215,6 +430,11 @@ Content-Type: application/json
 {
   "status": "shipping"
 }
+
+Response:
+- 200: Status updated
+- 400: Invalid status
+- 403: Not authorized
 ```
 
 ### Shopping Cart
@@ -228,39 +448,115 @@ Content-Type: application/json
   "productId": "product_id",
   "quantity": 1
 }
+
+Response:
+- 200: Added to cart
+- 400: Invalid quantity
+- 404: Product not found
 ```
 
 #### View Cart
 ```http
 GET /api/users/:id/cart
+
+Response:
+- 200: Cart contents
+- 404: User not found
 ```
 
 #### Clear Cart
 ```http
 POST /api/users/:id/cart/clear
+
+Response:
+- 200: Cart cleared
+- 404: User not found
 ```
 
 ## Data Validation
 
-The application implements thorough data validation:
+The application implements thorough data validation using regular expressions and Mongoose validation:
 
 ### User Data
-- Username: Lowercase letters and numbers only
-- Password: Minimum 8 characters, must include uppercase, lowercase, number, and special character
-- Email: Valid email format
-- Phone: International format with + prefix
-- Names: Letters and spaces only
+```javascript
+// Names (firstName, lastName)
+/^[A-Za-z\s'-]+$/
+- English letters
+- Spaces
+- Apostrophes (for names like O'Connor)
+- Hyphens (for double-barreled names)
+
+// Username
+/^[a-z][a-z0-9]*$/
+- Must start with lowercase letter
+- Can contain lowercase letters and numbers
+- No special characters
+
+// Password
+- At least one lowercase letter
+- At least one uppercase letter
+- At least one number
+- At least one special character
+- Length between 8 and 128 characters
+
+// Phone
+/^\+[0-9]+$/
+- Must start with plus
+- Only numbers after plus
+- Length between 10 and 15 characters
+
+// Email
+/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+- Standard email format validation
+
+// Address (country, city, street)
+/^[A-Za-z\s\-.']+$/
+- English letters
+- Spaces
+- Hyphens and periods
+- Apostrophes allowed
+```
 
 ### Product Data
-- Name: 3-100 characters, alphanumeric with some special characters
-- Description: 10-1000 characters
-- Price: Positive number
-- Quantity: Positive integer
+```javascript
+// Name
+/^[A-Za-z0-9][A-Za-z0-9\s&,.()/'(-]*[A-Za-z0-9).]$/
+- Must start with letter or number
+- Can contain spaces, &, punctuation, brackets
+- Must end with letter, number, bracket, or period
+
+// Description
+/^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/
+- Must start with letter or number
+- Allows punctuation and special characters
+- Must end properly
+
+// Image Path
+/^(https?:\/\/[\w-]+\.[\w-]+\.|\/)?[\w/-]+\.(png|jpg|jpeg)$/i
+- Allows both URLs and local paths
+- Must end with valid image extension
+```
+
+### Category Data
+```javascript
+// Name
+/^[a-zA-Z0-9-_ ]+$/
+- Letters and numbers
+- Hyphens and underscores
+- Spaces allowed
+
+// Description
+- Similar to product description
+- Minimum 10 characters
+- Maximum 500 characters
+```
 
 ### Order Processing
 - Stock verification before order placement
 - Automatic stock adjustment
-- Status transition validation
+- Status transition validation:
+  - Admin: pending → shipping/cancelled, shipping → completed
+  - User: pending → cancelled only
 
 ## Testing
 
