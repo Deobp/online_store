@@ -74,62 +74,12 @@ cd [project-name]
 cd backend
 npm install
 
-# Create .env file with:
+# Create .env file in src/config with:
 DB_CONNECT = mongodb://<username>:<password>@host:port/dbname
 PORT = 3000
 SALT_ROUNDS = 1
 JWT_SECRET = "your_secret_key"
-```
-**Database Initialization**
 
-To set up the initial database with default data, such as categories, users, and products, use the following command.
-
-Steps:
-
-- Open a terminal.
-
-- Navigate to the backend directory:
-
-```bash
-cd backend
-```
-
-- Run the initialization script:
-```bash
-npm run init-db
-```
-
-This script will:
-
-- Connect to the MongoDB database specified in your .env configuration.
-
-- Clear any existing data in the User, Product, and Category collections.
-
-- Populate the database with predefined categories, users, and products.
-
-- Create default Users
-
-The database will be initialized with two default users:
-
-{Admin User
-
-Username: admin
-
-Password: Pa$$word123
-
-Role: admin}
-
-{Regular User
-
-Username: user1
-
-Password: Pa$$word123
-
-Role: user}
-
-Note: Make sure to change the default passwords in production environments to ensure security.
-
-```bash
 # Start server
 node server.js
 ```
@@ -141,168 +91,102 @@ npm install
 npm run dev
 ```
 
+## API Documentation
+
+### Authentication
+```http
+POST /api/users/register   # Create new user account
+POST /api/users/login      # Get authentication token
+POST /api/users/logout     # Clear authentication token
+```
+
+### Users
+```http
+GET    /api/users         # List all users (admin)
+GET    /api/users/:id     # Get user details
+PUT    /api/users/:id     # Update user
+DELETE /api/users/:id     # Delete user
+```
+
+### Products
+```http
+POST   /api/products      # Create product (admin)
+GET    /api/products      # List all products
+GET    /api/products/actual # List in-stock products
+GET    /api/products/:id  # Get product details
+PUT    /api/products/:id  # Update product (admin)
+DELETE /api/products/:id  # Delete product (admin)
+```
+
+### Shopping Cart
+```http
+POST   /api/users/:id/cart      # Add to cart
+GET    /api/users/:id/cart      # View cart
+POST   /api/users/:id/cart/clear # Clear cart
+```
+
+### Orders
+```http
+POST   /api/users/:id/orders    # Create order from cart
+GET    /api/orders              # List all orders (admin)
+GET    /api/orders/:id          # Get order details
+PATCH  /api/orders/:id          # Update order status
+```
+
 ## Database Schema
 
-### User Schema
+### User
 ```javascript
 {
-  firstName: {
-    type: String,
-    required: true,
-    match: [/^[A-Za-z\s'-]+$/, "Letters, spaces, hyphens, apostrophes only"],
-    minlength: 1,
-    maxlength: 50
-  },
-  lastName: {
-    type: String,
-    required: true,
-    match: [/^[A-Za-z\s'-]+$/, "Letters, spaces, hyphens, apostrophes only"],
-    minlength: 1,
-    maxlength: 50
-  },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    match: [/^[a-z][a-z0-9]*$/, "Start with lowercase, letters and numbers only"],
-    minlength: 4,
-    maxlength: 16
-  },
-  password: {
-    type: String,
-    required: true,
-    // Validated through bcrypt with complexity requirements
-  },
-  role: {
-    type: String,
-    required: true,
-    enum: ["user", "admin"],
-    default: "user"
-  },
-  phone: {
-    type: String,
-    required: true,
-    unique: true,
-    match: [/^\+[0-9]+$/, "International format with + prefix"],
-    minlength: 10,
-    maxlength: 15
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    minlength: 5,
-    maxlength: 254,
-    match: [/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, "Valid email format"]
-  },
-  country: String,
-  city: String,
-  street: String,
-  house: Number,
-  apartment: Number,
-  cart: [{
+  firstName: String,     // Required, letters and hyphens, 1-50 chars
+  lastName: String,      // Required, letters and hyphens, 1-50 chars
+  username: String,      // Required, unique, lowercase letters and numbers
+  password: String,      // Required, hashed, min 8 chars with complexity rules
+  role: String,         // "user" or "admin"
+  email: String,        // Required, unique, valid email format
+  phone: String,        // Required, unique, international format (+numbers)
+  country: String,      // Required, letters and spaces
+  city: String,         // Required, letters and spaces
+  street: String,       // Required, letters and spaces
+  house: Number,        // Required, positive integer
+  apartment: Number,    // Optional, positive integer
+  cart: [{ productId, quantity }]
+}
+```
+
+### Product
+```javascript
+{
+  name: String,        // Required, unique, 3-100 chars
+  description: String, // Required, 10-1000 chars
+  price: Number,       // Required, positive
+  quantity: Number,    // Required, integer, min 0
+  categoryId: ObjectId,// Required, reference to Category
+  imagePath: String,   // Required, PNG/JPG/JPEG path
+  isEnded: Boolean    // Out of stock flag
+}
+```
+
+### Category
+```javascript
+{
+  name: String,        // Required, unique, 2-50 chars, alphanumeric
+  description: String  // Optional, 10-500 chars
+}
+```
+
+### Order
+```javascript
+{
+  userId: ObjectId,    // Reference to User
+  products: [{        // Array of ordered products
     productId: ObjectId,
-    quantity: Number
-  }]
-}
-```
-
-### Product Schema
-```javascript
-{
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    match: [/^[A-Za-z0-9][A-Za-z0-9\s&,.()/'(-]*[A-Za-z0-9).]$/],
-    minlength: 3,
-    maxlength: 100
-  },
-  description: {
-    type: String,
-    required: true,
-    match: [/^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/],
-    minlength: 10,
-    maxlength: 1000
-  },
-  imagePath: {
-    type: String,
-    required: true,
-    match: [/^(https?:\/\/[\w-]+\.[\w-]+\.|\/)?[\w/-]+\.(png|jpg|jpeg)$/i],
-    default: "/img/products/default.png"
-  },
-  price: {
-    type: Number,
-    required: true,
-    min: 0.01
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 0,
-    validate: Number.isInteger
-  },
-  categoryId: {
-    type: ObjectId,
-    ref: "Category",
-    required: true
-  },
-  isEnded: {
-    type: Boolean,
-    required: true,
-    default: false
-  }
-}
-```
-### Category Schema
-```javascript
-{
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    match: [/^[a-zA-Z0-9-_ ]+$/, "Letters, numbers, hyphens, underscores only"],
-    minlength: 2,
-    maxlength: 50,
-  },
-  description: {
-    type: String,
-    match: [/^[a-zA-Z0-9][a-zA-Z0-9\s,.!?()&$#@%*+\-"':]*[a-zA-Z0-9.]$/],
-    minlength: 10,
-    maxlength: 500,
-    default: "No description."
-  }
-}
-```
-
-### Order Schema
-```javascript
-{
-  userId: {
-    type: ObjectId,
-    ref: "User",
-    required: true
-  },
-  products: [{
-    productId: {
-      type: ObjectId,
-      ref: "Product",
-      required: true
-    },
-    priceAtPurchase: Number,
-    quantity: {
-      type: Number,
-      default: 1
-    }
+    quantity: Number,
+    priceAtPurchase: Number
   }],
-  status: {
-    type: String,
-    enum: ["pending", "shipping", "completed", "cancelled"],
-    default: "pending"
-  },
+  status: String,     // pending/shipping/completed/cancelled
   totalPrice: Number,
-  createdAt: Date,
-  updatedAt: Date
+  createdAt: Date
 }
 ```
 
@@ -310,10 +194,10 @@ npm run dev
 
 ### Authentication Implementation
 - JWT tokens stored in HTTP-only cookies
-- Token verification on protected routes
-- Role-based access control (Admin/User)
-- Password hashing using bcrypt
-- Error handling for invalid tokens
+- Secure session management
+- Protection against XSS attacks
+- CSRF protection through cookies
+- Automatic token cleanup on logout
 
 ### Cookie Settings
 ```javascript
@@ -321,292 +205,9 @@ res.cookie("token", token, {
   httpOnly: true,    // Prevents JavaScript access
   maxAge: 3600000,   // 1 hour expiration
   // secure: true,   // Uncomment in production (HTTPS only)
+  // sameSite: 'strict'  // CSRF protection
 });
 ```
-
-### Server Security
-```javascript
-// CORS configuration
-app.use(cors({
-  origin: true,
-  credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
-// Helmet security headers
-app.use(helmet());
-
-// JSON parser with validation
-app.use(express.json({
-  verify: (req, res, buf) => {
-    if (buf.length > 0 && req.headers["content-type"]?.includes("application/json")) {
-      JSON.parse(buf);
-    }
-  }
-}));
-```
-
-## API Documentation
-
-### Authentication Endpoints
-
-#### Register User
-```http
-POST /api/users/register
-Content-Type: application/json
-
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "username": "johndoe",
-  "password": "SecurePass123!",
-  "email": "john@example.com",
-  "phone": "+1234567890",
-  "country": "USA",
-  "city": "New York",
-  "street": "Broadway",
-  "house": 123,
-  "apartment": 45
-}
-
-Response: 
-- 201: User created
-- 400: Validation error
-- 409: Username/email/phone exists
-```
-
-#### Login
-```http
-POST /api/users/login
-Content-Type: application/json
-
-{
-  "username": "johndoe",
-  "password": "SecurePass123!"
-}
-
-Response:
-- 200: Success + JWT cookie
-- 401: Invalid credentials
-```
-
-#### Logout
-```http
-POST /api/users/logout
-
-Response:
-- 200: Cookie cleared
-```
-
-### Product Management
-
-#### Create Product (Admin)
-```http
-POST /api/products
-Content-Type: application/json
-
-{
-  "name": "Product Name",
-  "description": "Product Description",
-  "price": 99.99,
-  "quantity": 100,
-  "categoryId": "category_id",
-  "imagePath": "/images/product.jpg"
-}
-
-Response:
-- 201: Product created
-- 400: Validation error
-- 403: Not admin
-```
-
-#### Get Products
-```http
-GET /api/products        # All products
-GET /api/products/actual # In-stock products (isEnded: false)
-GET /api/products/:id    # Specific product
-
-Response:
-- 200: Success
-- 404: Product not found (for /:id)
-```
-
-### Category Management
-
-#### Create Category (Admin)
-```http
-POST /api/categories
-Content-Type: application/json
-
-{
-  "name": "Category Name",
-  "description": "Category Description"
-}
-
-Response:
-- 201: Category created
-- 400: Validation error
-- 403: Not admin
-```
-
-#### Get Categories
-```http
-GET /api/categories         # All categories
-GET /api/categories/:id     # Specific category
-GET /api/categories/:id/products  # Products in category
-
-Response:
-- 200: Success
-- 404: Category not found
-```
-
-### Order Management
-
-#### Create Order
-```http
-POST /api/users/:id/orders
-
-Response:
-- 201: Order created
-- 400: Empty cart
-- 404: User not found/Product not found
-```
-
-#### Update Order Status
-```http
-PATCH /api/orders/:id
-Content-Type: application/json
-
-{
-  "status": "shipping"
-}
-
-Response:
-- 200: Status updated
-- 400: Invalid status
-- 403: Not authorized
-```
-
-### Shopping Cart
-
-#### Add to Cart
-```http
-POST /api/users/:id/cart
-Content-Type: application/json
-
-{
-  "productId": "product_id",
-  "quantity": 1
-}
-
-Response:
-- 200: Added to cart
-- 400: Invalid quantity
-- 404: Product not found
-```
-
-#### View Cart
-```http
-GET /api/users/:id/cart
-
-Response:
-- 200: Cart contents
-- 404: User not found
-```
-
-#### Clear Cart
-```http
-POST /api/users/:id/cart/clear
-
-Response:
-- 200: Cart cleared
-- 404: User not found
-```
-
-## Data Validation
-
-The application implements thorough data validation using regular expressions and Mongoose validation:
-
-### User Data
-```javascript
-// Names (firstName, lastName)
-/^[A-Za-z\s'-]+$/
-- English letters
-- Spaces
-- Apostrophes (for names like O'Connor)
-- Hyphens (for double-barreled names)
-
-// Username
-/^[a-z][a-z0-9]*$/
-- Must start with lowercase letter
-- Can contain lowercase letters and numbers
-- No special characters
-
-// Password
-- At least one lowercase letter
-- At least one uppercase letter
-- At least one number
-- At least one special character
-- Length between 8 and 128 characters
-
-// Phone
-/^\+[0-9]+$/
-- Must start with plus
-- Only numbers after plus
-- Length between 10 and 15 characters
-
-// Email
-/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-- Standard email format validation
-
-// Address (country, city, street)
-/^[A-Za-z\s\-.']+$/
-- English letters
-- Spaces
-- Hyphens and periods
-- Apostrophes allowed
-```
-
-### Product Data
-```javascript
-// Name
-/^[A-Za-z0-9][A-Za-z0-9\s&,.()/'(-]*[A-Za-z0-9).]$/
-- Must start with letter or number
-- Can contain spaces, &, punctuation, brackets
-- Must end with letter, number, bracket, or period
-
-// Description
-/^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/
-- Must start with letter or number
-- Allows punctuation and special characters
-- Must end properly
-
-// Image Path
-/^(https?:\/\/[\w-]+\.[\w-]+\.|\/)?[\w/-]+\.(png|jpg|jpeg)$/i
-- Allows both URLs and local paths
-- Must end with valid image extension
-```
-
-### Category Data
-```javascript
-// Name
-/^[a-zA-Z0-9-_ ]+$/
-- Letters and numbers
-- Hyphens and underscores
-- Spaces allowed
-
-// Description
-- Similar to product description
-- Minimum 10 characters
-- Maximum 500 characters
-```
-
-### Order Processing
-- Stock verification before order placement
-- Automatic stock adjustment
-- Status transition validation:
-  - Admin: pending → shipping/cancelled, shipping → completed
-  - User: pending → cancelled only
 
 ## Testing
 
@@ -648,7 +249,7 @@ The API endpoints have been tested using Postman.
 ### Planned Improvements
 
 #### Code Refactoring
-- Implement service layer pattern
+- Implement business logic layer through services
 - Add input validation middleware
 - Improve error handling
 - Add request rate limiting
@@ -718,7 +319,7 @@ This is an educational project open for contributions. Areas where you can contr
 - Git
 
 ### Environment Variables
-Backend `.env` file:
+Backend `.env` file in `src/config/.env`:
 ```env
 DB_CONNECT = mongodb://<username>:<password>@host:port/dbname
 PORT = 3000
@@ -726,15 +327,60 @@ SALT_ROUNDS = 1
 JWT_SECRET = "your_secret_key"
 ```
 
+### Initial Data Setup
+The project includes initial data setup with categories, products, and user accounts.
+
+1. Default Categories:
+   - Books
+   - Music Albums
+   - Movies
+   - Tools
+   - Plants
+
+2. Default Users:
+```javascript
+// Admin account
+{
+  username: "admin",
+  password: "Pa$$word123",
+  role: "admin"
+}
+
+// Regular user account
+{
+  username: "user1",
+  password: "Pa$$word123",
+  role: "user"
+}
+```
+
+3. Sample products in each category (books, albums, movies, tools, plants)
+
+To initialize the database with sample data:
+```bash
+# From the backend directory
+npm run init-db
+```
+
+This will:
+- Clear existing data
+- Create categories
+- Add sample products
+- Create default user accounts
+
 ### Running for Development
 1. Start MongoDB service
-2. Start backend:
+2. Initialize database with sample data:
    ```bash
    cd backend
+   npm run init-db
+   ```
+3. Start backend:
+   ```bash
    npm install
    node server.js
    ```
-3. Start frontend:
+4. Start frontend:
    ```bash
    cd frontend
    npm install
