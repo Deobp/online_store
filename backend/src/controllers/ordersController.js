@@ -156,7 +156,6 @@ export async function deleteOrder(req, res, next) {
   }
 }
 
-// Add this function to your existing controller
 export async function getUserOrders(req, res) {
     try {
         const userId = req.user.id;
