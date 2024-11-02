@@ -63,3 +63,44 @@ export const USER_EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
 // - Periods
 // - Apostrophes
 export const USER_COUNTRY_CITY_STREET = /^[A-Za-z\s\-.']+$/;
+
+// Product name allows:
+// - Must start with letter or number
+// - Can contain:
+//   - English letters (a-z, A-Z)
+//   - Numbers (0-9)
+//   - Spaces
+//   - Ampersand (&) for product lines like "M&M's"
+//   - Apostrophe (') for possessive forms like "Baker's"
+//   - Basic punctuation (,.)
+//   - Brackets () for specifications
+//   - Forward slash (/) for product variations
+//   - Hyphen (-) for compound names
+// - Must end with letter, number, closing bracket, or period
+export const PRODUCT_NAME_REGEX = /^[A-Za-z0-9][A-Za-z0-9\s&,.()/'(-]*[A-Za-z0-9).]$/;
+
+// Product description allows:
+// - Must start with letter or number
+// - Can contain:
+//   - English letters (a-z, A-Z)
+//   - Numbers (0-9)
+//   - Spaces
+//   - Basic punctuation (,.!?)
+//   - Brackets () for specifications or quotes
+//   - Common special chars (&$#@%*+)
+//   - Hyphen (-)
+//   - Various quotes ("':)
+// - Must end with letter, number, punctuation (.!?) or closing bracket
+export const PRODUCT_DESCRIPTION_REGEX = /^[A-Za-z0-9][A-Za-z0-9\s,.!?()&$#@%*+\-"':]*[A-Za-z0-9.!?)]$/;
+
+// Image path validation:
+// Allows both URLs and local paths:
+// - Optional http:// or https:// prefix
+// - Optional domain (example.com)
+// - Path segments with letters, numbers, hyphens
+// - Must end with .png, .jpg, or .jpeg (case insensitive)
+// Examples:
+// - https://example.com/images/product.jpg
+// - /uploads/product-image.png
+// - images/my-product.jpeg
+export const PRODUCT_IMAGE_PATH_REGEX = /^(https?:\/\/[\w-]+\.[\w-]+\.|\/)?[\w/-]+\.(png|jpg|jpeg)$/i;

@@ -139,7 +139,6 @@ export async function updateStatus(req, res) {
 
     // Update order status
     await order.updateStatus(status);
-    await order.save();
 
     res.status(200).json({ message: `Status updated to '${status}'`, order });
   } catch (error) {

@@ -15,25 +15,26 @@ import {
     authenticateToken,
     isAdmin
   } from "../middlewares/auth.js"
+import { bodyCheck, noBodyCheck, paramsCheck } from '../middlewares/preControllerValidation.js';
 
 const router = express.Router();
 
 router.route("/")
-  .post(authenticateToken, isAdmin, createProduct)
-  .get(getProducts);
+  .post(bodyCheck, authenticateToken, isAdmin, createProduct)
+  .get(noBodyCheck, getProducts);
 
-router.get("/actual", getActualProducts)
+router.get("/actual", noBodyCheck, getActualProducts)
 
 router.route("/:id")
-  .get(getProductById)
-  .put(authenticateToken, isAdmin, fullUpdateProductById)
-  .patch(authenticateToken, isAdmin, partialUpdateProductById)
-  .delete(authenticateToken, isAdmin, deleteProductById)
+  .get(noBodyCheck, paramsCheck, getProductById)
+  .put(bodyCheck, authenticateToken, isAdmin, paramsCheck, fullUpdateProductById)
+  .patch(bodyCheck, authenticateToken, isAdmin, paramsCheck, partialUpdateProductById)
+  .delete(noBodyCheck, authenticateToken, isAdmin, paramsCheck, deleteProductById)
 
 // Increase product quantity
-router.patch('/:id/increase-quantity', authenticateToken, isAdmin, increaseProductQuantity);
+router.patch('/:id/increase-quantity', bodyCheck, authenticateToken, isAdmin, paramsCheck, increaseProductQuantity);
 
 // Decrease product quantity
-router.patch('/:id/decrease-quantity', authenticateToken, isAdmin, decreaseProductQuantity);
+router.patch('/:id/decrease-quantity', bodyCheck, authenticateToken, isAdmin, paramsCheck, decreaseProductQuantity);
 
 export default router;

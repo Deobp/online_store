@@ -3,7 +3,8 @@ import { UserError } from "../utils/errors.js";
 
 // check if route parameter ':id' is a correct for mongoose
 export async function paramsCheck(req, res, next) {
-  if (req.params.id === "me") req.params.id = req.user.id;
+  if (req.baseUrl === "/api/users" && req.params.id === "me")
+    req.params.id = req.user.id;
 
   const { id } = req.params;
 
@@ -37,6 +38,11 @@ export async function bodyCheck(req, res, next) {
     endpoint = "/cart";
   } else if (req.path.endsWith("/login")) {
     endpoint = "/login";
+  } else if (
+    req.path.endsWith("/increase-quantity") ||
+    req.path.endsWith("/decrease-quantity")
+  ) {
+    endpoint = "/quantity";
   } else {
     endpoint = req.baseUrl;
   }
@@ -331,6 +337,150 @@ export async function bodyCheck(req, res, next) {
       if (typeof password !== "string")
         return next(
           new UserError("Body parameter 'password' must be a string.")
+        );
+
+      break;
+    }
+
+    case "/api/products": {
+      // we are expecting not more than 11 parameters
+      if (receivedKeys.length > 6)
+        return next(
+          new UserError("Too many parameters. Not more than 6 are expected.")
+        );
+
+      if (req.method !== "PATCH") {
+        // we are expecting not less than 10 parameters [fix later for methods]
+        if (receivedKeys.length < 5)
+          return next(
+            new UserError("Not enough parameters. At least 5 are expexted.")
+          );
+      }
+
+      // parameters are strictly defined
+      const allowedParams = [
+        "name",
+        "description",
+        "price",
+        "quantity",
+        "categoryId",
+        "imagePath",
+      ];
+
+      // if there is smth else...
+      const isBodyValid = receivedKeys.every(function (key) {
+        return allowedParams.includes(key);
+      });
+
+      // ...BAD REQUEST
+      if (!isBodyValid)
+        return next(new UserError("Invalid parameters in body."));
+
+      // collecting body parameters
+      const { name, description, price, quantity, categoryId, imagePath } =
+        req.body;
+
+      // if name is missing and wrong type
+      if (name === undefined) {
+        if (req.method !== "PATCH") {
+          return next(new UserError("Body parameter 'name' is missing."));
+        }
+      } else if (typeof name !== "string") {
+        return next(new UserError("Body parameter 'name' must be a string."));
+      }
+
+      // if description is missing and wrong type
+      if (description === undefined) {
+        if (req.method !== "PATCH") {
+          return next(
+            new UserError("Body parameter 'description' is missing.")
+          );
+        }
+      } else if (typeof description !== "string") {
+        return next(
+          new UserError("Body parameter 'description' must be a string.")
+        );
+      }
+
+      // if quantity is missing and wrong type
+      if (quantity === undefined) {
+        if (req.method !== "PATCH") {
+          return next(new UserError("Body parameter 'quantity' is missing."));
+        }
+      } else if (!Number.isInteger(quantity) || quantity < 1) {
+        return next(
+          new UserError(
+            "Body parameter 'quantity' must be a positive Integer >=1."
+          )
+        );
+      }
+
+      // if price is missing and wrong type
+      if (price === undefined) {
+        if (req.method !== "PATCH") {
+          return next(new UserError("Body parameter 'price' is missing."));
+        }
+      } else if (typeof price !== "number" || price <= 0) {
+        return next(
+          new UserError(
+            "Body parameter 'price' must be a positive non-zero number."
+          )
+        );
+      }
+
+      // if categoryId is missing and wrong type
+      if (categoryId === undefined) {
+        if (req.method !== "PATCH") {
+          return next(new UserError("Body parameter 'categoryId' is missing."));
+        }
+      } else if (typeof categoryId !== "string") {
+        return next(
+          new UserError("Body parameter 'categoryId' must be a string.")
+        );
+      } else if (!mongoose.isValidObjectId(categoryId)) {
+        return next(new UserError("Invalid body parameter 'categoryId'."));
+      }
+
+      // optional parameter
+      if (imagePath !== undefined && typeof imagePath !== "string") {
+        return next(
+          new UserError("Body parameter 'imagePath' must be a string.")
+        );
+      }
+
+      break;
+    }
+
+    case "/quantity": {
+      // we are expecting only 2 parameters
+      if (receivedKeys.length > 1)
+        return next(
+          new UserError("Too many parameters. Only 'amount' is expected.")
+        );
+
+      // parameters are strictly defined
+      const allowedParams = ["amount"];
+
+      // if there is smth else...
+      const isBodyValid = receivedKeys.every(function (key) {
+        return allowedParams.includes(key);
+      });
+
+      // ...BAD REQUEST
+      if (!isBodyValid)
+        return next(new UserError("Invalid parameters in body."));
+
+      const { amount } = req.body;
+
+      // if amount is missing
+      if (amount === undefined)
+        return next(new UserError("Body parameter 'amount' is missing."));
+
+      if (!Number.isInteger(amount) || amount < 1)
+        return next(
+          new UserError(
+            "Body parameter 'amount' must be a positive Integer >=1."
+          )
         );
 
       break;
