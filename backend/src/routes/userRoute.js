@@ -11,6 +11,7 @@ import {
   viewCart,
   logout,
   partialUpdateUserById,
+  getOrdersByUserId,
 } from "../controllers/userController.js";
 
 import {
@@ -32,15 +33,15 @@ router.get("/", noBodyCheck, authenticateToken, isAdmin, getUsers);
 
 router
   .route("/:id")
-  .get(noBodyCheck, authenticateToken, paramsCheck, getUserById)
-  .put(bodyCheck, authenticateToken, paramsCheck, fullUpdateUserById)
-  .patch(bodyCheck, authenticateToken, paramsCheck, partialUpdateUserById)
-  .delete(noBodyCheck, paramsCheck, authenticateToken, isAdmin, deleteUser);
+  .get(noBodyCheck, authenticateToken, paramsCheck, getUserById) // get one user or 'me'
+  .put(bodyCheck, authenticateToken, paramsCheck, fullUpdateUserById) // full update one user or 'me'
+  .patch(bodyCheck, authenticateToken, paramsCheck, partialUpdateUserById) // partial update one user or 'me'
+  .delete(noBodyCheck, authenticateToken, paramsCheck, isAdmin, deleteUser); // delete user
 
 router
   .route("/:id/cart")
-  .get(noBodyCheck, authenticateToken, paramsCheck, viewCart)
-  .post(bodyCheck, authenticateToken, paramsCheck, addToCart);
+  .get(noBodyCheck, authenticateToken, paramsCheck, viewCart) // view user's cart or 'me'
+  .post(bodyCheck, authenticateToken, paramsCheck, addToCart); // add products to user's cart or 'me'
 
 router.post(
   "/:id/cart/clear",
@@ -48,8 +49,11 @@ router.post(
   authenticateToken,
   paramsCheck,
   clearCart
-);
+); // clear user's cart or 'me'
 
-router.post("/:id/orders", authenticateToken, createOrder);
+router
+  .route("/:id/orders")
+  .post(noBodyCheck, authenticateToken, paramsCheck, createOrder) // create order based on the cart of 1 user or 'me'
+  .get(noBodyCheck, authenticateToken, paramsCheck, getOrdersByUserId); // get orders of 1 user or 'me'
 
 export default router;

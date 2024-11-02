@@ -25,12 +25,12 @@ export const getUserById = async (req, res, next) => {
 
     //if (id === "me") id = req.user.id;
 
-    if (req.user.id !== id) {
+    /*if (req.user.id !== id) {
       if (req.user.role !== "admin")
         return res.status(401).json({
           message: "Access denied, you are not admin or this is not your data.",
         });
-    }
+    }*/
 
     const user = await User.findById(id);
 
@@ -53,10 +53,10 @@ export const fullUpdateUserById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (req.user.id !== id) {
+    /*if (req.user.id !== id) {
       if (req.user.role !== "admin")
         return next(new UserError("Access denied.", 401));
-    }
+    }*/
 
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -89,10 +89,10 @@ export const partialUpdateUserById = async (req, res, next) => {
     const { id } = req.params;
     const params = req.body;
 
-    if (req.user.id !== id) {
+    /*if (req.user.id !== id) {
       if (req.user.role !== "admin")
         return next(new UserError("Access denied.", 403));
-    }
+    }*/
 
     const user = await User.findById(id);
     if (!user) return next(new UserError("User not found.", 404));
@@ -234,10 +234,10 @@ export const deleteUser = async (req, res, next) => {
 export const addToCart = async (req, res, next) => {
   const { id } = req.params;
 
-  if (req.user.id !== id) {
+  /*if (req.user.id !== id) {
     if (req.user.role !== "admin")
       return next(new UserError("Access denied.", 403));
-  }
+  }*/
 
   const { productId, quantity } = req.body;
   try {
@@ -269,10 +269,10 @@ export async function clearCart(req, res, next) {
 
   //if (id === "me") id = req.user.id;
 
-  if (req.user.id !== id) {
+  /*if (req.user.id !== id) {
     if (req.user.role !== "admin")
       return next(new UserError("Access denied.", 403));
-  }
+  }*/
 
   try {
     const user = await User.findById(id);
@@ -295,10 +295,11 @@ export async function viewCart(req, res, next) {
 
   //if (id === "me") id = req.user.id;
 
-  if (req.user.id !== id) {
+  /*if (req.user.id !== id) {
     if (req.user.role !== "admin")
       return next(new UserError("Access denied.", 403));
-  }
+  }*/
+
   try {
     const user = await User.findById(id);
 
@@ -395,7 +396,9 @@ export async function registerUser(req, res, next) {
     // duplicate value error from mongo
     if (error.code === 11000)
       return next(
-        new UserError("Duplicate value. Body parameters 'username', 'email', 'phone' must be unique.")
+        new UserError(
+          "Duplicate value. Body parameters 'username', 'email', 'phone' must be unique."
+        )
       );
 
     next(error);
@@ -411,6 +414,17 @@ export async function logout(req, res, next) {
     });
 
     return res.status(200).json({ message: "Logout: success." });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Getting list of orders from 1 user
+export async function getOrdersByUserId(req, res, next) {
+  try {
+    const user = await User.findById(req.params.id).populate("orders");
+
+    res.json(user.orders);
   } catch (error) {
     next(error);
   }

@@ -3,8 +3,12 @@ import { UserError } from "../utils/errors.js";
 
 // check if route parameter ':id' is a correct for mongoose
 export async function paramsCheck(req, res, next) {
-  if (req.baseUrl === "/api/users" && req.params.id === "me")
-    req.params.id = req.user.id;
+  if (req.baseUrl === "/api/users") {
+    if (req.params.id === "me") {
+      req.params.id = req.user.id;
+    } else if (req.userRole !== "admin")
+      return next(new UserError("Access denied.", 403));
+  }
 
   const { id } = req.params;
 
@@ -343,7 +347,7 @@ export async function bodyCheck(req, res, next) {
     }
 
     case "/api/products": {
-      // we are expecting not more than 11 parameters
+      // we are expecting not more than 6 parameters
       if (receivedKeys.length > 6)
         return next(
           new UserError("Too many parameters. Not more than 6 are expected.")
@@ -482,6 +486,37 @@ export async function bodyCheck(req, res, next) {
             "Body parameter 'amount' must be a positive Integer >=1."
           )
         );
+
+      break;
+    }
+
+    case "/api/orders": {
+      // we are expecting only 2 parameters
+      if (receivedKeys.length > 1)
+        return next(
+          new UserError("Too many parameters. Only 'status' is expected.")
+        );
+
+      // parameters are strictly defined
+      const allowedParams = ["status"];
+
+      // if there is smth else...
+      const isBodyValid = receivedKeys.every(function (key) {
+        return allowedParams.includes(key);
+      });
+
+      // ...BAD REQUEST
+      if (!isBodyValid)
+        return next(new UserError("Invalid parameters in body."));
+
+      const { status } = req.body;
+
+      // if amount is missing
+      if (status === undefined)
+        return next(new UserError("Body parameter 'status' is missing."));
+
+      if (typeof status !== "string")
+        return next(new UserError("Body parameter 'status' must be a string."));
 
       break;
     }

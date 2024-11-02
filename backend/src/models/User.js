@@ -257,6 +257,12 @@ userSchema.methods.updateApartment = async function (newApartment) {
   return await this.save();
 };
 
+userSchema.virtual("orders", {
+  ref: "Order",
+  localField: "_id",
+  foreignField: "userId",
+});
+
 const User = mongoose.model("User", userSchema);
 
 export default User;

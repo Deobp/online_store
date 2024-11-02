@@ -4,22 +4,22 @@ import {
     getAllOrders,
     getOrderById,
     updateStatus,
-    deleteOrder,
-    getUserOrders
+    deleteOrder
 } from "../controllers/ordersController.js"
 
 import {
     authenticateToken,
     isAdmin
 } from "../middlewares/auth.js"
+import { bodyCheck, noBodyCheck, paramsCheck } from "../middlewares/preControllerValidation.js"
 
 const router = express.Router()
 
-router.get("/", authenticateToken, isAdmin, getAllOrders)
-router.get("/me", authenticateToken, getUserOrders)
+router.get("/", noBodyCheck, authenticateToken, isAdmin, getAllOrders)
+
 router.route("/:id")
-    .get(authenticateToken, getOrderById)
-    .patch(authenticateToken, isAdmin, updateStatus)
-    .delete(authenticateToken, isAdmin, deleteOrder)
+    .get(noBodyCheck, authenticateToken, paramsCheck, getOrderById)
+    .patch(bodyCheck, authenticateToken, paramsCheck, /*isAdmin,*/ updateStatus)
+    .delete(noBodyCheck, authenticateToken, paramsCheck, isAdmin, deleteOrder)
 
 export default router
