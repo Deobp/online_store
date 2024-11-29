@@ -1,4 +1,3 @@
-// components/ProtectedComponent.js
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
